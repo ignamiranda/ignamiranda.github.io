@@ -1,0 +1,235 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Name Generator">
+  <main class="generator">
+    <nav class="breadcrumb">
+      <a href="/">&larr; ignamiranda</a>
+    </nav>
+
+    <header class="header">
+      <h1 class="title">Fantasy Name Generator</h1>
+      <p class="subtitle">
+        Markov chain generator for fantasy race names. Pick a race and generate.
+      </p>
+    </header>
+
+    <div id="app">
+      <fieldset class="races" id="race-buttons">
+        <legend class="sr-only">Select a race</legend>
+        <button class="race-btn active" data-race="human">Human</button>
+        <button class="race-btn" data-race="elf">Elf</button>
+        <button class="race-btn" data-race="dwarf">Dwarf</button>
+        <button class="race-btn" data-race="orc">Orc</button>
+        <button class="race-btn" data-race="halfling">Halfling</button>
+      </fieldset>
+
+      <button id="generate-btn" class="btn">Generate Names</button>
+
+      <div id="output" class="names" aria-live="polite">
+        <p class="placeholder">Select a race and generate names to begin.</p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // @ts-nocheck
+  import { MarkovChain } from "../lib/markov";
+  import { fantasyNames } from "../data/fantasy-names";
+
+  const generators = {};
+  for (const [race, names] of Object.entries(fantasyNames)) {
+    generators[race] = new MarkovChain(names, 2);
+  }
+
+  let currentRace = "human";
+  const raceBtns = document.querySelectorAll(".race-btn");
+  const output = document.getElementById("output");
+  const generateBtn = document.getElementById("generate-btn");
+
+  function setRace(race) {
+    currentRace = race;
+    raceBtns.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.race === race);
+    });
+    generateNames();
+  }
+
+  function generateNames() {
+    const gen = generators[currentRace];
+    const names = gen.generateMany(6);
+
+    output.innerHTML =
+      names.length > 0
+        ? names
+            .map((name) => `<span class="name-item">${name}</span>`)
+            .join("")
+        : '<p class="placeholder">Could not generate names. Try again.</p>';
+  }
+
+  raceBtns.forEach((btn) => {
+    btn.addEventListener("click", () => setRace(btn.dataset.race));
+  });
+
+  generateBtn.addEventListener("click", generateNames);
+
+  generateNames();
+</script>
+
+<style>
+  .generator {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .breadcrumb {
+    align-self: flex-start;
+    margin-bottom: 2rem;
+  }
+  .breadcrumb a {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .breadcrumb a:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .title {
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 28rem;
+    line-height: 1.5;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  .races {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    border: none;
+    margin-bottom: 2rem;
+  }
+
+  .race-btn {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.5rem 1.25rem;
+    border: 1px solid var(--muted);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .race-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .race-btn.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 0.7rem 2rem;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 2.5rem;
+  }
+  .btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .names {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    min-height: 4rem;
+    width: 100%;
+  }
+
+  .name-item {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--fg) 4%, transparent);
+    animation: fadeIn 0.25s ease-out both;
+  }
+
+  .name-item:nth-child(2) {
+    animation-delay: 0.03s;
+  }
+  .name-item:nth-child(3) {
+    animation-delay: 0.06s;
+  }
+  .name-item:nth-child(4) {
+    animation-delay: 0.09s;
+  }
+  .name-item:nth-child(5) {
+    animation-delay: 0.12s;
+  }
+  .name-item:nth-child(6) {
+    animation-delay: 0.15s;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .placeholder {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+</style>

@@ -20,6 +20,20 @@ _Avoid_: MVP, prototype
 Smooth animations, bold visual design, interactive elements, and dynamic visuals over the long term — not all at once on day one.
 _Avoid_: Fancy, cool effects
 
+**Playground**:
+Low-friction creative space for experiments, sketches, interactive toys, and unfinished things. The site itself invites creation.
+_Avoid_: Portfolio gallery, polished showcase
+
+**Domain**:
+Software, writing, design/visual art, and games/interactive — multi-disciplinary, not siloed.
+
+**Name Generator**:
+Markov chain generator for fantasy race names (human, elf, dwarf, orc, halfling). Client-side. First content piece — acts as a reference implementation that demonstrates how the site can host interactive tools.
+_Avoid_: Syllable tables, server-side generation
+
+**Generative Art**:
+Code that produces visuals — outputs displayed on the site as galleries or live canvases. The site's own design (dark theme, neon accents, animations) is itself a design statement.
+
 ## Example dialogue
 
 **Dev**: Should I scaffold a blog or a portfolio?
