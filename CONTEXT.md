@@ -28,8 +28,17 @@ _Avoid_: Portfolio gallery, polished showcase
 Software, writing, design/visual art, and games/interactive — multi-disciplinary, not siloed.
 
 **Name Generator**:
-Markov chain generator for fantasy race names (human, elf, dwarf, orc, halfling). Client-side. First content piece — acts as a reference implementation that demonstrates how the site can host interactive tools.
-_Avoid_: Syllable tables, server-side generation
+Client-side Markov-chain tool for creating custom name generators from one user-provided example list, with advanced controls. First content piece — acts as a reference implementation that demonstrates how the site can host interactive tools. Lives on its own page (`/name-generator`), linked from the Generators section on the home page.
+_Avoid_: Fixed race lists, server-side generation, syllable tables
+
+**Draft**:
+A saved generator configuration — name, example list, and settings. One per generator, stored in browser localStorage, auto-saved debounced. User names each draft on creation. Auto-restores last active draft on return, with ability to switch.
+
+**Example Generators**:
+Two built-in pre-loaded generators so first-time visitors can immediately use the tool: a fantasy name generator (combined race names) and a sci-fi name generator. These serve as both demos and starting points.
+
+**Generators**:
+A section on the home page listing interactive tools. Currently holds the Name Generator card.
 
 **Generative Art**:
 Code that produces visuals — outputs displayed on the site as galleries or live canvases. The site's own design (dark theme, neon accents, animations) is itself a design statement.

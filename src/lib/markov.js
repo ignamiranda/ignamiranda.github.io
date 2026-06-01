@@ -2,6 +2,7 @@ export class MarkovChain {
   constructor(seeds, order = 2) {
     this.order = order;
     this.chain = new Map();
+    this.rng = Math.random;
 
     for (const seed of seeds) {
       if (seed.length > 1) this._addSeed(seed.toLowerCase());
@@ -29,7 +30,7 @@ export class MarkovChain {
       const possible = this.chain.get(context);
       if (!possible || possible.length === 0) break;
 
-      const next = possible[Math.floor(Math.random() * possible.length)];
+      const next = possible[Math.floor(this.rng() * possible.length)];
       if (next === startChar) break;
 
       result += next;

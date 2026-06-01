@@ -13,10 +13,22 @@ import Layout from "../layouts/Layout.astro";
         A playground for software, design, and games.
       </p>
       <nav class="links">
-        <a href="/name-generator">Name Generator</a>
         <a href="https://github.com/ignamiranda" target="_blank">GitHub</a>
         <a href="mailto:ignamiranda@users.noreply.github.com">Email</a>
       </nav>
+    </section>
+
+    <section class="section" id="generators">
+      <h2 class="section-title">Generators</h2>
+      <div class="card-grid">
+        <a href="/name-generator" class="card">
+          <h3 class="card-title">Name Generator</h3>
+          <p class="card-desc">
+            Build your own Markov-chain name generator — fantasy, sci-fi, or anything you dream up.
+          </p>
+          <span class="card-meta">Create your own &rarr;</span>
+        </a>
+      </div>
     </section>
   </main>
 </Layout>
@@ -80,5 +92,65 @@ import Layout from "../layouts/Layout.astro";
     border-color: var(--accent);
     color: var(--accent);
     opacity: 1;
+  }
+
+  /* ─── Sections ─── */
+  .section {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .card-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .card {
+    display: block;
+    padding: 1.5rem;
+    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+    border-radius: 12px;
+    transition: all 0.25s;
+    color: var(--fg);
+    text-decoration: none;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .card-desc {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-meta {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
   }
 </style>
