@@ -15,6 +15,14 @@ import { exampleGenerators } from "../data/example-generators";
         <h2 class="sidebar-title">Drafts</h2>
         <button class="new-btn" id="new-btn">+ New generator</button>
         <ul class="draft-list" id="draft-list"></ul>
+        <section class="favorites-tray" id="favorites-tray">
+          <div class="favorites-header">
+            <h3 class="favorites-title">Favorites</h3>
+            <button type="button" class="favorites-clear" id="favorites-clear">Clear</button>
+          </div>
+          <ul class="favorites-list" id="favorites-list"></ul>
+          <button type="button" class="favorites-copy" id="favorites-copy">Copy favorites</button>
+        </section>
       </aside>
 
       <!-- Main -->
@@ -100,6 +108,9 @@ import { exampleGenerators } from "../data/example-generators";
   const maxLength = $("max-length");
   const seedInput = $("seed");
   const newBtn = $("new-btn");
+  const favoritesList = $("favorites-list");
+  const favoritesCopyBtn = $("favorites-copy");
+  const favoritesClearBtn = $("favorites-clear");
 
   /* ─── Helpers ─── */
   let saveTimer = null;
@@ -118,6 +129,22 @@ import { exampleGenerators } from "../data/example-generators";
     }
   }
 
+  function escapeHtml(text) {
+    return text
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function normalizeDraft(draft) {
+    return {
+      ...draft,
+      favorites: Array.isArray(draft.favorites) ? draft.favorites : [],
+    };
+  }
+
   /* ─── State ─── */
   let state = loadDrafts();
 
@@ -131,11 +158,16 @@ import { exampleGenerators } from "../data/example-generators";
         name: eg.name,
         examples: eg.examples,
         settings: { count: 10, minLength: 4, maxLength: 12, seed: "" },
+        favorites: [],
       };
     }
     const ids = Object.keys(drafts);
     state = { activeDraftId: ids[0], drafts };
     saveDrafts(state);
+  } else {
+    for (const id of Object.keys(state.drafts)) {
+      state.drafts[id] = normalizeDraft(state.drafts[id]);
+    }
   }
 
   function getActiveDraft() {
@@ -166,6 +198,7 @@ import { exampleGenerators } from "../data/example-generators";
   function render() {
     renderSidebar();
     renderActiveDraft();
+    renderFavorites();
   }
 
   function renderSidebar() {
@@ -212,6 +245,40 @@ import { exampleGenerators } from "../data/example-generators";
     resultsEl.innerHTML = '<p class="placeholder">Click Generate to create names.</p>';
   }
 
+  function renderFavorites() {
+    const draft = getActiveDraft();
+    if (!draft) {
+      favoritesList.innerHTML = "";
+      favoritesCopyBtn.disabled = true;
+      favoritesClearBtn.disabled = true;
+      return;
+    }
+
+    const favorites = draft.favorites || [];
+    if (favorites.length === 0) {
+      favoritesList.innerHTML = '<li class="favorites-placeholder">No favorites yet.</li>';
+      favoritesCopyBtn.disabled = true;
+      favoritesClearBtn.disabled = true;
+      return;
+    }
+
+    favoritesList.innerHTML = favorites
+      .map(
+        (name) =>
+          `<li class="favorites-item"><span class="favorite-name">${escapeHtml(name)}</span><button type="button" class="favorite-remove" data-name="${escapeHtml(name)}" aria-label="Remove ${escapeHtml(name)}">×</button></li>`,
+      )
+      .join("");
+
+    favoritesCopyBtn.disabled = false;
+    favoritesClearBtn.disabled = false;
+
+    favoritesList.querySelectorAll(".favorite-remove").forEach((el) => {
+      el.addEventListener("click", () => {
+        removeFavorite(el.dataset.name || "");
+      });
+    });
+  }
+
   /* ─── Actions ─── */
   function selectDraft(id) {
     if (id === state.activeDraftId) return;
@@ -234,6 +301,7 @@ import { exampleGenerators } from "../data/example-generators";
           name: eg.name,
           examples: eg.examples,
           settings: { count: 10, minLength: 4, maxLength: 12, seed: "" },
+          favorites: [],
         };
       }
       const ids = Object.keys(drafts);
@@ -255,6 +323,7 @@ import { exampleGenerators } from "../data/example-generators";
       name: name.trim(),
       examples: [],
       settings: { count: 10, minLength: 4, maxLength: 12, seed: "" },
+      favorites: [],
     };
     state.activeDraftId = id;
     saveDrafts(state);
@@ -292,14 +361,20 @@ import { exampleGenerators } from "../data/example-generators";
       return;
     }
 
+    const favoriteSet = new Set((draft.favorites || []).map((name) => name.toLowerCase()));
+
     resultsEl.innerHTML = names
-      .map((name) => `<span class="name-item" tabindex="0">${name}</span>`)
+      .map((name) => {
+        const isFavorited = favoriteSet.has(name.toLowerCase());
+        const starLabel = isFavorited ? "Unfavorite" : "Favorite";
+        return `<span class="name-item" tabindex="0" data-name="${escapeHtml(name)}"><button type="button" class="favorite-toggle${isFavorited ? " active" : ""}" data-name="${escapeHtml(name)}" aria-label="${starLabel} ${escapeHtml(name)}">${isFavorited ? "★" : "☆"}</button><span class="name-text">${escapeHtml(name)}</span></span>`;
+      })
       .join("");
 
     // Click/copy on each name
     resultsEl.querySelectorAll(".name-item").forEach((el) => {
       el.addEventListener("click", () => {
-        copyText(el.textContent);
+        copyText(el.dataset.name || "");
         el.classList.add("copied");
         setTimeout(() => el.classList.remove("copied"), 800);
       });
@@ -309,6 +384,60 @@ import { exampleGenerators } from "../data/example-generators";
           el.click();
         }
       });
+    });
+
+    resultsEl.querySelectorAll(".favorite-toggle").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleFavorite(el.dataset.name || "");
+      });
+    });
+  }
+
+  function toggleFavorite(name) {
+    const draft = getActiveDraft();
+    if (!draft || !name) return;
+
+    const index = draft.favorites.findIndex((item) => item.toLowerCase() === name.toLowerCase());
+    if (index >= 0) {
+      draft.favorites.splice(index, 1);
+    } else {
+      draft.favorites.unshift(name);
+    }
+
+    saveDrafts(state);
+    renderFavorites();
+    updateResultFavoriteState();
+  }
+
+  function removeFavorite(name) {
+    const draft = getActiveDraft();
+    if (!draft || !name) return;
+    draft.favorites = draft.favorites.filter((item) => item.toLowerCase() !== name.toLowerCase());
+    saveDrafts(state);
+    renderFavorites();
+    updateResultFavoriteState();
+  }
+
+  function clearFavorites() {
+    const draft = getActiveDraft();
+    if (!draft) return;
+    draft.favorites = [];
+    saveDrafts(state);
+    renderFavorites();
+    updateResultFavoriteState();
+  }
+
+  function updateResultFavoriteState() {
+    const draft = getActiveDraft();
+    if (!draft) return;
+    const favoriteSet = new Set((draft.favorites || []).map((name) => name.toLowerCase()));
+    resultsEl.querySelectorAll(".favorite-toggle").forEach((el) => {
+      const name = el.dataset.name || "";
+      const isFavorited = favoriteSet.has(name.toLowerCase());
+      el.classList.toggle("active", isFavorited);
+      el.textContent = isFavorited ? "★" : "☆";
+      el.setAttribute("aria-label", `${isFavorited ? "Unfavorite" : "Favorite"} ${name}`);
     });
   }
 
@@ -384,6 +513,16 @@ import { exampleGenerators } from "../data/example-generators";
   /* ─── Button handlers ─── */
   generateBtn.addEventListener("click", generate);
   newBtn.addEventListener("click", createNew);
+  favoritesCopyBtn.addEventListener("click", () => {
+    const draft = getActiveDraft();
+    if (!draft || draft.favorites.length === 0) return;
+    copyText(draft.favorites.join("\n"));
+    favoritesCopyBtn.textContent = "Copied";
+    setTimeout(() => {
+      favoritesCopyBtn.textContent = "Copy favorites";
+    }, 800);
+  });
+  favoritesClearBtn.addEventListener("click", clearFavorites);
 
   /* ─── Init ─── */
   render();
@@ -457,6 +596,108 @@ import { exampleGenerators } from "../data/example-generators";
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  .favorites-tray {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .favorites-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .favorites-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .favorites-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-height: 14rem;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+  }
+
+  .favorites-placeholder {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .favorites-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+    background: color-mix(in srgb, var(--fg) 4%, transparent);
+  }
+
+  .favorite-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .favorites-clear,
+  .favorites-copy,
+  .favorite-remove {
+    all: unset;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    color: var(--muted);
+  }
+
+  .favorites-copy {
+    border: 1px solid color-mix(in srgb, var(--fg) 15%, transparent);
+    border-radius: 6px;
+    text-align: center;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.78rem;
+    transition: all 0.15s;
+  }
+  .favorites-clear {
+    font-size: 0.75rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .favorites-clear:hover,
+  .favorites-copy:hover,
+  .favorite-remove:hover {
+    color: var(--accent);
+  }
+  .favorites-copy:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  .favorites-copy:disabled,
+  .favorites-clear:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .favorite-remove {
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 0 0.2rem;
   }
 
   .draft-item {
@@ -733,6 +974,9 @@ import { exampleGenerators } from "../data/example-generators";
     transition: all 0.15s;
     animation: fadeIn 0.2s ease-out both;
     user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
   }
   .name-item:hover {
     border-color: var(--accent);
@@ -746,6 +990,24 @@ import { exampleGenerators } from "../data/example-generators";
   .name-item:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+
+  .favorite-toggle {
+    all: unset;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .favorite-toggle:hover,
+  .favorite-toggle.active {
+    color: #ffd166;
+  }
+
+  .name-text {
+    line-height: 1;
   }
 
   @keyframes fadeIn {
