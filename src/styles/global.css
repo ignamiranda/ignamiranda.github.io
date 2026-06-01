@@ -1,10 +1,10 @@
 :root {
-  --bg: #0a0a0a;
-  --fg: #e0e0e0;
-  --muted: #666;
-  --accent: #00ff88;
-  --accent2: #ff00ff;
-  --accent3: #00ccff;
+  --bg: #0f1115;
+  --fg: #e6e9ef;
+  --muted: #a7b0c0;
+  --accent: #7c8aa6;
+  --accent2: #b8a98a;
+  --accent3: #6f7f9d;
   --font: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
