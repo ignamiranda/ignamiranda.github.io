@@ -1,5 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+const notes = await getCollection("notes");
 ---
 
 <Layout title="ignamiranda">
@@ -30,18 +32,32 @@ import Layout from "../layouts/Layout.astro";
         </a>
       </div>
     </section>
+
+    <section class="section" id="notes">
+      <h2 class="section-title">Notes</h2>
+      {notes.length > 0 ? (
+        <ul class="note-list">
+          {notes.map((note) => (
+            <li>
+              <a href={`/notes/${note.slug}`} class="note-link">{note.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="note-empty">Nothing here yet.</p>
+      )}
+    </section>
   </main>
 </Layout>
 
 <style>
-  .hero {
-    min-height: 100vh;
+    .hero {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 2rem;
+    padding: 4rem 2rem;
   }
 
   h1 {
@@ -152,5 +168,31 @@ import Layout from "../layouts/Layout.astro";
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--accent);
+  }
+
+  /* ─── Notes ─── */
+  .note-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .note-link {
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+
+  .note-link:hover {
+    color: var(--accent);
+  }
+
+  .note-empty {
+    color: var(--muted);
+    font-size: 0.95rem;
   }
 </style>

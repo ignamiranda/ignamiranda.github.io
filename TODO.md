@@ -49,7 +49,7 @@
   - Site name (links to `/`)
   - "Random note" link
   - Search box (placeholder — non-functional until priority 3)
-- [ ] Update home page:
+- [x] Update home page:
   - Compact hero (name + tagline + GitHub/Email links)
   - Below hero: list of all notes (placeholder — replaced by graph in priority 2)
   - No note cards yet (added in priority 2)
