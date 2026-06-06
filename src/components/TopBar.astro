@@ -9,12 +9,15 @@ const notes = getAllNotes();
     <a href="/" class="top-bar-logo">ignamiranda</a>
     <nav class="top-bar-nav">
       <a href="#" class="top-bar-link" id="random-link">Random</a>
-      <input
-        type="search"
-        class="top-bar-search"
-        placeholder="Search notes..."
-        aria-label="Search notes"
-      />
+      <div class="search-wrapper">
+        <input
+          type="search"
+          class="top-bar-search"
+          placeholder="Search notes..."
+          aria-label="Search notes"
+        />
+        <div class="search-dropdown" id="search-dropdown"></div>
+      </div>
     </nav>
   </div>
 </header>
@@ -24,18 +27,161 @@ const notes = getAllNotes();
 </script>
 
 <script>
-  (function () {
-    const link = document.getElementById("random-link");
-    const dataEl = document.getElementById("topbar-notes-data");
-    if (!link || !dataEl) return;
+  import MiniSearch from "minisearch";
 
+  // -- Random link --
+  const link = document.getElementById("random-link");
+  const dataEl = document.getElementById("topbar-notes-data");
+  if (link && dataEl) {
     const notes = JSON.parse(dataEl.textContent || "[]");
-
     link.addEventListener("click", (e) => {
       e.preventDefault();
       if (!notes.length) return;
       const pick = notes[Math.floor(Math.random() * notes.length)];
       window.location.href = "/notes/" + encodeURIComponent(pick.slug);
     });
-  })();
+  }
+
+  // -- Search --
+  const searchInput = document.querySelector(".top-bar-search");
+  const searchDropdown = document.getElementById("search-dropdown");
+
+  if (searchInput && searchDropdown) {
+    let miniSearch = null;
+    let fetched = false;
+    let selectedIndex = -1;
+
+    async function ensureIndex() {
+      if (fetched) return;
+      fetched = true;
+      try {
+        const res = await fetch("/search-index.json");
+        const docs = await res.json();
+        if (!docs.length) return;
+        const ms = new MiniSearch({
+          fields: ["title", "preview", "tags"],
+          storeFields: ["slug", "title", "preview"],
+        });
+        ms.addAll(docs);
+        miniSearch = ms;
+      } catch {
+        // index unavailable — no search
+      }
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement("div");
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function renderResults(query) {
+      if (!miniSearch || !query.trim()) {
+        searchDropdown.innerHTML = "";
+        searchDropdown.classList.remove("visible");
+        selectedIndex = -1;
+        return;
+      }
+      const results = miniSearch.search(query, { prefix: true, fuzzy: 0.2 });
+      if (!results.length) {
+        searchDropdown.innerHTML = "";
+        searchDropdown.classList.remove("visible");
+        selectedIndex = -1;
+        return;
+      }
+      selectedIndex = -1;
+      searchDropdown.innerHTML = results
+        .map(
+          (r, i) =>
+            `<div class="search-result-item" data-index="${i}" data-slug="${r.slug}">
+              <div class="search-result-title">${escapeHtml(r.title)}</div>
+              <div class="search-result-preview">${escapeHtml(r.preview)}</div>
+            </div>`,
+        )
+        .join("");
+      searchDropdown.classList.add("visible");
+    }
+
+    function navigateTo(slug) {
+      window.location.href = "/notes/" + encodeURIComponent(slug);
+    }
+
+    function getSelectedSlug() {
+      const sel = searchDropdown.querySelector(".search-result-item.selected");
+      return sel ? sel.dataset.slug : null;
+    }
+
+    function selectNext() {
+      const items = searchDropdown.querySelectorAll(".search-result-item");
+      if (!items.length) return;
+      if (selectedIndex >= 0) items[selectedIndex].classList.remove("selected");
+      selectedIndex = (selectedIndex + 1) % items.length;
+      items[selectedIndex].classList.add("selected");
+      items[selectedIndex].scrollIntoView({ block: "nearest" });
+    }
+
+    function selectPrev() {
+      const items = searchDropdown.querySelectorAll(".search-result-item");
+      if (!items.length) return;
+      if (selectedIndex >= 0) items[selectedIndex].classList.remove("selected");
+      selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+      items[selectedIndex].classList.add("selected");
+      items[selectedIndex].scrollIntoView({ block: "nearest" });
+    }
+
+    function closeDropdown() {
+      searchDropdown.innerHTML = "";
+      searchDropdown.classList.remove("visible");
+      selectedIndex = -1;
+      searchInput.blur();
+    }
+
+    // Lazy fetch on focus so first interaction loads the index
+    searchInput.addEventListener("focus", () => {
+      ensureIndex();
+    });
+
+    // Re-query on each keystroke
+    searchInput.addEventListener("input", () => {
+      renderResults(searchInput.value);
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener("keydown", (e) => {
+      if (!searchDropdown.classList.contains("visible")) return;
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          selectNext();
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          selectPrev();
+          break;
+        case "Enter":
+          e.preventDefault();
+          const slug = getSelectedSlug();
+          if (slug) navigateTo(slug);
+          break;
+        case "Escape":
+          e.preventDefault();
+          closeDropdown();
+          break;
+      }
+    });
+
+    // Click on a result item
+    searchDropdown.addEventListener("click", (e) => {
+      const item = e.target.closest(".search-result-item");
+      if (item) navigateTo(item.dataset.slug);
+    });
+
+    // Click outside → close
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".search-wrapper")) {
+        searchDropdown.classList.remove("visible");
+        selectedIndex = -1;
+      }
+    });
+  }
 </script>

@@ -137,6 +137,63 @@ export function getAllBacklinks(): Map<string, Backlink[]> {
   return buildBacklinkMap();
 }
 
+export interface SearchEntry {
+  slug: string;
+  title: string;
+  preview: string;
+  tags: string[];
+}
+
+function stripMarkdown(body: string): string {
+  return body
+    .replace(/^#+\s+/gm, "")
+    .replace(/[*_~`]/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/>\s*/g, "")
+    .replace(/---+/g, "")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractPreview(body: string): string {
+  const stripped = stripMarkdown(body);
+  if (stripped.length <= 200) return stripped;
+  return stripped.substring(0, 200).replace(/\s+\S*$/, "") + "\u2026";
+}
+
+let searchCache: SearchEntry[] | null = null;
+
+/** Build search index data: slug, title, preview, tags for every note. */
+export function generateSearchIndex(): SearchEntry[] {
+  if (searchCache) return searchCache;
+
+  const notesDir = process.cwd() + "/src/content/notes";
+  const entries: SearchEntry[] = [];
+
+  try {
+    const files = readdirSync(notesDir);
+    for (const file of files) {
+      if (!file.endsWith(".md")) continue;
+      const slug = slugify(file.slice(0, -3));
+      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
+      const { data, body } = parseFrontmatter(content);
+      const title = (data.title as string | undefined) || extractTitle(body) || slug;
+      const tags = (data.tags as string[]) || [];
+      const preview =
+        (data.description as string | undefined) || extractPreview(body);
+
+      entries.push({ slug, title, preview, tags });
+    }
+  } catch {
+    // Directory may not exist
+  }
+
+  searchCache = entries;
+  return entries;
+}
+
 const dateCache = new Map<string, string | null>();
 
 /** Get the date for a note: frontmatter date > git commit date > null. */

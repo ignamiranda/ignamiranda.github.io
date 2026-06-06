@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "astro": "^5.0.0",
-    "force-graph": "^1.51.4"
+    "force-graph": "^1.51.4",
+    "minisearch": "^7.2.0"
   }
 }

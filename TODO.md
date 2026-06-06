@@ -71,11 +71,11 @@
 
 ### 3 — Search
 
-- [ ] Generate search index JSON at build time (title, slug, preview, tags)
-- [ ] Lazy-load index when user clicks search box (not on every page load)
-- [ ] `minisearch` (or similar lightweight library) for client-side full-text search
-- [ ] Dropdown results panel in top bar — click result navigates to note
-- [ ] Handle keyboard: `/` to focus, `Escape` to close, arrow keys to navigate
+- [x] Generate search index JSON at build time (title, slug, preview, tags)
+- [x] Lazy-load index when user clicks search box (not on every page load)
+- [x] `minisearch` (or similar lightweight library) for client-side full-text search
+- [x] Dropdown results panel in top bar — click result navigates to note
+- [x] Handle keyboard: `/` to focus, `Escape` to close, arrow keys to navigate
 
 ### 4 — Tag Infrastructure
 
