@@ -47,6 +47,11 @@ code {
   font-size: 0.9em;
 }
 
+/* Backlinks section */
+.backlinks a {
+  color: var(--accent2);
+}
+
 /* Wikilink dead-link styling */
 a.wikilink.dead-link {
   text-decoration: underline dashed var(--muted);

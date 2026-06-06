@@ -38,12 +38,12 @@
 - [x] Write remark plugin to parse `[[wikilinks]]`:
   - Resolve to `/notes/{slug}` for existing notes
   - Render as styled dead-link for unresolved targets
-- [ ] Compute backlinks at build time from parsed link graph
+- [x] Compute backlinks at build time from parsed link graph
 - [ ] Build note page layout:
-  - Full prose width (~38-42rem centered)
+  - Full prose width (~38-42rem centered) — done
   - Metadata line: date + tags
-  - Backlinks section at bottom
-  - Dead-link styling (dashed underline, muted color, `?` affordance) — CSS done, needs layout
+  - Backlinks section at bottom — done
+  - Dead-link styling (dashed underline, muted color, `?` affordance) — done
   - Minimal rendering page exists at `src/pages/notes/[...slug].astro` (foundation for this)
 - [ ] Build top bar:
   - Site name (links to `/`)

@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from "astro:content";
+import { getBacklinks } from "../../lib/backlinks";
 
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
@@ -11,11 +12,25 @@ export async function getStaticPaths() {
 
 const { note } = Astro.props;
 const { Content } = await render(note);
+const backlinks = getBacklinks(note.slug);
 ---
 
 <main>
   <h1>{note.data.title || note.slug}</h1>
   <Content />
+
+  {
+    backlinks.length > 0 && (
+      <section class="backlinks">
+        <h2>Linked from</h2>
+        <ul>
+          {backlinks.map((link) => (
+            <li><a href={`/notes/${link.slug}`}>{link.title}</a></li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </main>
 
 <style>
@@ -23,5 +38,29 @@ const { Content } = await render(note);
     max-width: 42rem;
     margin: 4rem auto;
     padding: 0 1rem;
+  }
+
+  .backlinks {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--accent);
+  }
+
+  .backlinks h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .backlinks ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .backlinks li {
+    margin-bottom: 0.5rem;
   }
 </style>
