@@ -3,6 +3,25 @@ import Layout from "../layouts/Layout.astro";
 import ForceGraph from "../components/ForceGraph.astro";
 import { getCollection } from "astro:content";
 const notes = await getCollection("notes");
+
+function stripMarkdown(body: string): string {
+  return body
+    .replace(/^#+\s+/gm, "")
+    .replace(/[*_~`]/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/>\s*/g, "")
+    .replace(/---+/g, "")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function previewText(body: string): string {
+  const stripped = stripMarkdown(body);
+  if (stripped.length <= 150) return stripped;
+  return stripped.substring(0, 150).replace(/\s+\S*$/, "") + "\u2026";
+}
 ---
 
 <Layout title="ignamiranda">
@@ -42,17 +61,45 @@ const notes = await getCollection("notes");
     <section class="section" id="notes">
       <h2 class="section-title">Notes</h2>
       {notes.length > 0 ? (
-        <ul class="note-list">
-          {notes.map((note) => (
-            <li>
-              <a href={`/notes/${note.slug}`} class="note-link">{note.data.title}</a>
-            </li>
-          ))}
-        </ul>
+        <>
+          <a href="#" class="random-note" id="random-note-btn">Random note</a>
+          <div class="card-grid">
+            {notes.map((note) => {
+              const preview =
+                note.data.description ||
+                (note.body ? previewText(note.body) : "");
+              return (
+                <a href={`/notes/${note.slug}`} class="card">
+                  <h3 class="card-title">{note.data.title || note.slug}</h3>
+                  {preview && <p class="card-desc">{preview}</p>}
+                </a>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <p class="note-empty">Nothing here yet.</p>
       )}
     </section>
+
+    <script type="application/json" id="index-notes-data">
+      {JSON.stringify(notes.map((n) => ({ slug: n.slug, title: n.data.title })))}
+    </script>
+
+    <script>
+      (function () {
+        const btn = document.getElementById("random-note-btn");
+        const dataEl = document.getElementById("index-notes-data");
+        if (!btn || !dataEl) return;
+        const notes = JSON.parse(dataEl.textContent || "[]");
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (!notes.length) return;
+          var pick = notes[Math.floor(Math.random() * notes.length)];
+          window.location.href = "/notes/" + encodeURIComponent(pick.slug);
+        });
+      })();
+    </script>
   </main>
 </Layout>
 
@@ -177,24 +224,18 @@ const notes = await getCollection("notes");
   }
 
   /* ─── Notes ─── */
-  .note-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .note-link {
-    color: var(--fg);
+  .random-note {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--muted);
     text-decoration: none;
-    font-size: 0.95rem;
+    margin-bottom: 1rem;
     transition: color 0.2s;
   }
-
-  .note-link:hover {
+  .random-note:hover {
     color: var(--accent);
+    opacity: 1;
   }
 
   .note-empty {

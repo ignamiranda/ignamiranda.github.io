@@ -64,7 +64,7 @@
   - Nodes sized by connection count
   - Hover shows title tooltip
   - Mobile: auto-zoom-to-fill, shorter height (~40vh)
-- [ ] Recent note + random note preview cards:
+- [x] Recent note + random note preview cards:
   - Show title + auto-extracted preview text
   - Link to the note
   - Random note changes on each page load (client-side pick from props)
