@@ -46,3 +46,16 @@ code {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
+
+/* Wikilink dead-link styling */
+a.wikilink.dead-link {
+  text-decoration: underline dashed var(--muted);
+  color: var(--muted);
+}
+
+a.wikilink.dead-link::after {
+  content: "?";
+  font-size: 0.8em;
+  opacity: 0.6;
+  margin-left: 0.1em;
+}

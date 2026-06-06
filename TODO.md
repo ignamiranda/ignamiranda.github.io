@@ -35,7 +35,7 @@
 ### 1 — Content Pipeline
 
 - [x] Set up `src/content/notes/` content collection with override-only frontmatter schema
-- [ ] Write remark plugin to parse `[[wikilinks]]`:
+- [x] Write remark plugin to parse `[[wikilinks]]`:
   - Resolve to `/notes/{slug}` for existing notes
   - Render as styled dead-link for unresolved targets
 - [ ] Compute backlinks at build time from parsed link graph
@@ -43,7 +43,8 @@
   - Full prose width (~38-42rem centered)
   - Metadata line: date + tags
   - Backlinks section at bottom
-  - Dead-link styling (dashed underline, muted color, `?` affordance)
+  - Dead-link styling (dashed underline, muted color, `?` affordance) — CSS done, needs layout
+  - Minimal rendering page exists at `src/pages/notes/[...slug].astro` (foundation for this)
 - [ ] Build top bar:
   - Site name (links to `/`)
   - "Random note" link
