@@ -1,5 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import ForceGraph from "../components/ForceGraph.astro";
 import { getCollection } from "astro:content";
 const notes = await getCollection("notes");
 ---
@@ -18,6 +19,11 @@ const notes = await getCollection("notes");
         <a href="https://github.com/ignamiranda" target="_blank">GitHub</a>
         <a href="mailto:ignamiranda@users.noreply.github.com">Email</a>
       </nav>
+    </section>
+
+    <section class="section" id="graph">
+      <h2 class="section-title">Graph</h2>
+      <ForceGraph />
     </section>
 
     <section class="section" id="generators">
@@ -194,5 +200,10 @@ const notes = await getCollection("notes");
   .note-empty {
     color: var(--muted);
     font-size: 0.95rem;
+  }
+
+  /* ─── Graph ─── */
+  #graph {
+    padding: 0 2rem 4rem;
   }
 </style>

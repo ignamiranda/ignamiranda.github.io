@@ -1,0 +1,120 @@
+---
+import { getAllNotes, getAllBacklinks } from "../lib/backlinks";
+
+const notes = getAllNotes();
+const backlinks = getAllBacklinks();
+
+const nodes = notes.map(n => ({
+  id: n.slug,
+  name: n.title,
+  val: (backlinks.get(n.slug)?.length || 0) + 1,
+}));
+
+const links: { source: string; target: string }[] = [];
+for (const [slug, sources] of backlinks) {
+  for (const src of sources) {
+    links.push({ source: src.slug, target: slug });
+  }
+}
+
+const graphData = { nodes, links };
+const hasNotes = notes.length > 0;
+---
+
+<div class="force-graph-wrapper">
+  {hasNotes ? (
+    <div id="force-graph-container"></div>
+    <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)}></script>
+    <script is:inline>
+      (async function initGraph() {
+        const container = document.getElementById('force-graph-container');
+        if (!container) return;
+
+        const dataEl = document.getElementById('graph-data');
+        const data = JSON.parse(dataEl?.textContent || '{"nodes":[],"links":[]}');
+
+        try {
+          const ForceGraph = await import('force-graph').then(m => m.default);
+          const graph = ForceGraph()(container)
+            .graphData(data)
+            .nodeId('id')
+            .nodeLabel('name')
+            .nodeVal('val')
+            .linkSource('source')
+            .linkTarget('target')
+            .nodeColor(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7c8aa6')
+            .linkColor(() => getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#a7b0c0')
+            .backgroundColor(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0f1115')
+            .onNodeClick(node => {
+              window.location.href = `/notes/${node.id}`;
+            });
+
+          // Auto-zoom to fit on mobile
+          if (window.innerWidth < 768) {
+            setTimeout(() => graph.zoomToFit(400, 20), 500);
+          }
+
+          // Re-zoom on resize
+          let resizeTimeout;
+          window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+              if (window.innerWidth < 768) {
+                graph.zoomToFit(400, 20);
+              }
+            }, 300);
+          });
+        } catch (err) {
+          console.error('Failed to load force-graph:', err);
+          container.innerHTML = '<p class="graph-error">Unable to load graph.</p>';
+        }
+      })();
+    </script>
+  ) : (
+    <div class="graph-empty">
+      <p>No notes yet</p>
+    </div>
+  )}
+</div>
+
+<style>
+  .force-graph-wrapper {
+    width: 100%;
+  }
+
+  #force-graph-container {
+    width: 100%;
+    height: 500px;
+    background: rgba(15, 17, 21, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .graph-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 500px;
+    background: rgba(15, 17, 21, 0.5);
+    border-radius: 8px;
+  }
+
+  .graph-empty p {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .graph-error {
+    color: var(--muted);
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    #force-graph-container,
+    .graph-empty {
+      height: 40vh;
+    }
+  }
+</style>

@@ -56,12 +56,12 @@
 
 ### 2 — Home Page + Graph
 
-- [ ] Integrate `force-graph` as a client-side Astro component
-- [ ] Build-time processing: read all notes, extract wikilinks, build nodes + edges JSON
-- [ ] Home page graph section:
+- [x] Integrate `force-graph` as a client-side Astro component
+- [x] Build-time processing: read all notes, extract wikilinks, build nodes + edges JSON
+- [x] Home page graph section:
   - Full width below hero
   - Interactive Canvas (pan, zoom, drag, click-to-navigate)
-  - Nodes sized by connection count (optional)
+  - Nodes sized by connection count
   - Hover shows title tooltip
   - Mobile: auto-zoom-to-fill, shorter height (~40vh)
 - [ ] Recent note + random note preview cards:
