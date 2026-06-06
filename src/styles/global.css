@@ -25,6 +25,7 @@ body {
   font-family: var(--font);
   line-height: 1.6;
   min-height: 100vh;
+  padding-top: 72px;
 }
 
 ::selection {
@@ -63,4 +64,72 @@ a.wikilink.dead-link::after {
   font-size: 0.8em;
   opacity: 0.6;
   margin-left: 0.1em;
+}
+
+/* Top bar */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #13151a;
+  border-bottom: 1px solid rgba(124, 138, 166, 0.08);
+  z-index: 100;
+}
+
+.top-bar-inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  font-size: 0.9rem;
+}
+
+.top-bar-logo {
+  color: var(--fg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.top-bar-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.top-bar-link {
+  color: var(--muted);
+}
+
+.top-bar-link:hover {
+  color: var(--fg);
+  opacity: 1;
+}
+
+.top-bar-search {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(124, 138, 166, 0.15);
+  border-radius: 4px;
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+  width: 140px;
+  outline: none;
+  transition: border-color 0.2s, width 0.2s;
+}
+
+.top-bar-search::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.top-bar-search:focus {
+  border-color: var(--accent);
+  width: 180px;
 }

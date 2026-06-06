@@ -1,4 +1,5 @@
 ---
+import Layout from "../../layouts/Layout.astro";
 import { getCollection, render } from "astro:content";
 import { getBacklinks, getNoteDate } from "../../lib/backlinks";
 
@@ -17,6 +18,7 @@ const date = getNoteDate(note.slug, note.data.date);
 const tags = note.data.tags;
 ---
 
+<Layout title={note.data.title}>
 <main>
   <h1>{note.data.title || note.slug}</h1>
 
@@ -106,3 +108,4 @@ const tags = note.data.tags;
     opacity: 0.7;
   }
 </style>
+</Layout>

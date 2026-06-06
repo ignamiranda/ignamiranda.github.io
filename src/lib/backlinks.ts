@@ -100,6 +100,38 @@ export function getBacklinks(slug: string): Backlink[] {
   return buildBacklinkMap().get(slug) || [];
 }
 
+interface NoteEntry {
+  slug: string;
+  title: string;
+}
+
+let noteCache: NoteEntry[] | null = null;
+
+/** Return a list of all notes (slug + title). */
+export function getAllNotes(): NoteEntry[] {
+  if (noteCache) return noteCache;
+
+  const notesDir = process.cwd() + "/src/content/notes";
+  const notes: NoteEntry[] = [];
+
+  try {
+    const files = readdirSync(notesDir);
+    for (const file of files) {
+      if (!file.endsWith(".md")) continue;
+      const slug = slugify(file.slice(0, -3));
+      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
+      const { data, body } = parseFrontmatter(content);
+      const title = (data.title as string | undefined) || extractTitle(body) || slug;
+      notes.push({ slug, title });
+    }
+  } catch {
+    // Directory may not exist
+  }
+
+  noteCache = notes;
+  return notes;
+}
+
 /** Return a map of all backlinks (slug → Backlink[]). */
 export function getAllBacklinks(): Map<string, Backlink[]> {
   return buildBacklinkMap();

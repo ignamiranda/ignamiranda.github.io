@@ -1,0 +1,41 @@
+---
+import { getAllNotes } from "../lib/backlinks";
+
+const notes = getAllNotes();
+---
+
+<header class="top-bar">
+  <div class="top-bar-inner">
+    <a href="/" class="top-bar-logo">ignamiranda</a>
+    <nav class="top-bar-nav">
+      <a href="#" class="top-bar-link" id="random-link">Random</a>
+      <input
+        type="search"
+        class="top-bar-search"
+        placeholder="Search notes..."
+        aria-label="Search notes"
+      />
+    </nav>
+  </div>
+</header>
+
+<script type="application/json" id="topbar-notes-data">
+  {JSON.stringify(notes)}
+</script>
+
+<script>
+  (function () {
+    const link = document.getElementById("random-link");
+    const dataEl = document.getElementById("topbar-notes-data");
+    if (!link || !dataEl) return;
+
+    const notes = JSON.parse(dataEl.textContent || "[]");
+
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!notes.length) return;
+      const pick = notes[Math.floor(Math.random() * notes.length)];
+      window.location.href = "/notes/" + encodeURIComponent(pick.slug);
+    });
+  })();
+</script>

@@ -45,7 +45,7 @@
   - Backlinks section at bottom — done
   - Dead-link styling (dashed underline, muted color, `?` affordance) — done
   - Minimal rendering page at `src/pages/notes/[...slug].astro`
-- [ ] Build top bar:
+- [x] Build top bar:
   - Site name (links to `/`)
   - "Random note" link
   - Search box (placeholder — non-functional until priority 3)
