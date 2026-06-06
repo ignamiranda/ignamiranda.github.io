@@ -34,7 +34,7 @@
 
 ### 1 — Content Pipeline
 
-- [ ] Set up `src/content/notes/` content collection with override-only frontmatter schema
+- [x] Set up `src/content/notes/` content collection with override-only frontmatter schema
 - [ ] Write remark plugin to parse `[[wikilinks]]`:
   - Resolve to `/notes/{slug}` for existing notes
   - Render as styled dead-link for unresolved targets
