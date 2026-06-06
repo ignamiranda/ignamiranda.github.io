@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import yaml from "js-yaml";
 
@@ -102,4 +103,38 @@ export function getBacklinks(slug: string): Backlink[] {
 /** Return a map of all backlinks (slug → Backlink[]). */
 export function getAllBacklinks(): Map<string, Backlink[]> {
   return buildBacklinkMap();
+}
+
+const dateCache = new Map<string, string | null>();
+
+/** Get the date for a note: frontmatter date > git commit date > null. */
+export function getNoteDate(slug: string, frontmatterDate?: string): string | null {
+  if (frontmatterDate) return frontmatterDate;
+
+  const cached = dateCache.get(slug);
+  if (cached !== undefined) return cached;
+
+  const notesDir = process.cwd() + "/src/content/notes";
+  try {
+    const files = readdirSync(notesDir);
+    const file = files.find(
+      (f) => f.endsWith(".md") && slugify(f.slice(0, -3)) === slug,
+    );
+    if (!file) {
+      dateCache.set(slug, null);
+      return null;
+    }
+
+    const result = execSync(
+      `git log -1 --format=%ad --date=short -- "${notesDir}/${file}"`,
+      { encoding: "utf-8", cwd: process.cwd() },
+    ).trim();
+
+    const date = result || null;
+    dateCache.set(slug, date);
+    return date;
+  } catch {
+    dateCache.set(slug, null);
+    return null;
+  }
 }

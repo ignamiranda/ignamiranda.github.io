@@ -5,6 +5,10 @@ const notes = defineCollection({
   schema: z.object({
     title: z.string().optional(),
     description: z.string().optional(),
+    date: z
+      .union([z.string(), z.date()])
+      .transform((v) => (typeof v === "string" ? v : v.toISOString().slice(0, 10)))
+      .optional(),
     tags: z.array(z.string()).optional(),
     draft: z.boolean().optional(),
     layout: z.string().optional(),

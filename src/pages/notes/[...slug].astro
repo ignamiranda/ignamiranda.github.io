@@ -1,6 +1,6 @@
 ---
 import { getCollection, render } from "astro:content";
-import { getBacklinks } from "../../lib/backlinks";
+import { getBacklinks, getNoteDate } from "../../lib/backlinks";
 
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
@@ -13,10 +13,29 @@ export async function getStaticPaths() {
 const { note } = Astro.props;
 const { Content } = await render(note);
 const backlinks = getBacklinks(note.slug);
+const date = getNoteDate(note.slug, note.data.date);
+const tags = note.data.tags;
 ---
 
 <main>
   <h1>{note.data.title || note.slug}</h1>
+
+  {
+    (date || (tags && tags.length > 0)) && (
+      <p class="meta">
+        {date && <time datetime={date}>{date}</time>}
+        {date && tags && tags.length > 0 && <span class="sep">·</span>}
+        {tags && tags.length > 0 && (
+          <>
+            {tags.map((tag) => (
+              <a href={`/tags/${tag}`} class="tag">{tag}</a>
+            ))}
+          </>
+        )}
+      </p>
+    )
+  }
+
   <Content />
 
   {
@@ -62,5 +81,28 @@ const backlinks = getBacklinks(note.slug);
 
   .backlinks li {
     margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0.5rem 0 2rem;
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .sep {
+    opacity: 0.4;
+  }
+
+  .tag {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .tag:hover {
+    opacity: 0.7;
   }
 </style>

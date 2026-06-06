@@ -39,12 +39,12 @@
   - Resolve to `/notes/{slug}` for existing notes
   - Render as styled dead-link for unresolved targets
 - [x] Compute backlinks at build time from parsed link graph
-- [ ] Build note page layout:
+- [x] Build note page layout:
   - Full prose width (~38-42rem centered) — done
-  - Metadata line: date + tags
+  - Metadata line: date + tags — done
   - Backlinks section at bottom — done
   - Dead-link styling (dashed underline, muted color, `?` affordance) — done
-  - Minimal rendering page exists at `src/pages/notes/[...slug].astro` (foundation for this)
+  - Minimal rendering page at `src/pages/notes/[...slug].astro`
 - [ ] Build top bar:
   - Site name (links to `/`)
   - "Random note" link
