@@ -1,0 +1,80 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getAllTags } from "../../lib/backlinks";
+const tags = getAllTags();
+---
+
+<Layout title="Tags">
+  <main>
+    <section class="section">
+      <h2 class="section-title">Tags</h2>
+      {tags.length > 0 ? (
+        <div class="tag-list">
+          {tags.map((t) => (
+            <a href={`/tags/${t.tag}`} class="tag-item">
+              <span class="tag-name">{t.tag}</span>
+              <sup class="tag-count">{t.count}</sup>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="tags-empty">No tags yet.</p>
+      )}
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .section {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .tag-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tag-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    padding: 0.4rem 0;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-size: 1rem;
+    width: fit-content;
+  }
+
+  .tag-item:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  .tag-name {
+    font-family: var(--font-mono);
+  }
+
+  .tag-count {
+    font-size: 0.75rem;
+    color: var(--muted);
+    opacity: 0.6;
+  }
+
+  .tags-empty {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+</style>

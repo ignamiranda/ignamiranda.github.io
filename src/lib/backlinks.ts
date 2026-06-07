@@ -194,6 +194,43 @@ export function generateSearchIndex(): SearchEntry[] {
   return entries;
 }
 
+export interface TagEntry {
+  tag: string;
+  count: number;
+}
+
+let tagCache: TagEntry[] | null = null;
+
+/** Return all tags with note counts, sorted by frequency. */
+export function getAllTags(): TagEntry[] {
+  if (tagCache) return tagCache;
+
+  const tagCounts = new Map<string, number>();
+  const notesDir = process.cwd() + "/src/content/notes";
+
+  try {
+    const files = readdirSync(notesDir);
+    for (const file of files) {
+      if (!file.endsWith(".md")) continue;
+      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
+      const { data } = parseFrontmatter(content);
+      const tags = (data.tags as string[]) || [];
+      for (const tag of tags) {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+      }
+    }
+  } catch {
+    // Directory may not exist
+  }
+
+  const sorted = [...tagCounts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count);
+
+  tagCache = sorted;
+  return sorted;
+}
+
 const dateCache = new Map<string, string | null>();
 
 /** Get the date for a note: frontmatter date > git commit date > null. */

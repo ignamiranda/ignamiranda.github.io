@@ -2,7 +2,9 @@
 import Layout from "../layouts/Layout.astro";
 import ForceGraph from "../components/ForceGraph.astro";
 import { getCollection } from "astro:content";
+import { getAllTags } from "../lib/backlinks";
 const notes = await getCollection("notes");
+const allTags = getAllTags();
 
 function stripMarkdown(body: string): string {
   return body
@@ -81,6 +83,17 @@ function previewText(body: string): string {
         <p class="note-empty">Nothing here yet.</p>
       )}
     </section>
+
+    {allTags.length > 0 && (
+    <section class="section" id="tags">
+      <h2 class="section-title">Tags</h2>
+      <div class="tag-cloud">
+        {allTags.map(t => (
+          <a href={`/tags/${t.tag}`} class="tag-cloud-item">{t.tag}<sup>{t.count}</sup></a>
+        ))}
+      </div>
+    </section>
+    )}
 
     <script type="application/json" id="index-notes-data">
       {JSON.stringify(notes.map((n) => ({ slug: n.slug, title: n.data.title })))}
@@ -246,5 +259,32 @@ function previewText(body: string): string {
   /* ─── Graph ─── */
   #graph {
     padding: 0 2rem 4rem;
+  }
+
+  /* ─── Tag cloud ─── */
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+
+  .tag-cloud-item {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .tag-cloud-item:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  .tag-cloud-item sup {
+    font-size: 0.7rem;
+    color: var(--muted);
+    opacity: 0.5;
+    margin-left: 0.15em;
   }
 </style>

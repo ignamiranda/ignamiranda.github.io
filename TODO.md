@@ -79,11 +79,11 @@
 
 ### 4 — Tag Infrastructure
 
-- [ ] Auto-generate per-tag pages at build time (`/tags/{tag}`)
-- [ ] Each tag page lists notes with that tag, sorted by date, with preview cards
-- [ ] Single `/tags` index page listing all tags with note count
-- [ ] Tag cloud component on home page (below or beside graph)
-- [ ] Display tags on note pages (badges above or below metadata line)
+- [x] Auto-generate per-tag pages at build time (`/tags/{tag}`)
+- [x] Each tag page lists notes with that tag, sorted by date, with preview cards
+- [x] Single `/tags` index page listing all tags with note count
+- [x] Tag cloud component on home page (below or beside graph)
+- [x] Display tags on note pages (badges above or below metadata line)
 
 ### 5 — Name Generator Re-integration
 
