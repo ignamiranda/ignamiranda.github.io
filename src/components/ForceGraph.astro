@@ -23,53 +23,76 @@ const hasNotes = notes.length > 0;
 
 <div class="force-graph-wrapper">
   {hasNotes ? (
-    <div id="force-graph-container"></div>
-    <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)}></script>
-    <script is:inline>
-      (async function initGraph() {
-        const container = document.getElementById('force-graph-container');
-        if (!container) return;
+    <>
+      <div style="position: relative;">
+        <div id="force-graph-loading" class="graph-loading">
+          <p>Loading graph...</p>
+        </div>
+        <div id="force-graph-container" role="img" aria-label={"Note link graph with " + nodes.length + " notes"}></div>
+      </div>
+      <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)}></script>
+      <script>
+        (async function initGraph() {
+          const container = document.getElementById('force-graph-container');
+          if (!container) return;
 
-        const dataEl = document.getElementById('graph-data');
-        const data = JSON.parse(dataEl?.textContent || '{"nodes":[],"links":[]}');
+          const observer = new IntersectionObserver(async (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              observer.disconnect();
 
-        try {
-          const ForceGraph = await import('force-graph').then(m => m.default);
-          const graph = ForceGraph()(container)
-            .graphData(data)
-            .nodeId('id')
-            .nodeLabel('name')
-            .nodeVal('val')
-            .linkSource('source')
-            .linkTarget('target')
-            .nodeColor(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7c8aa6')
-            .linkColor(() => getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#a7b0c0')
-            .backgroundColor(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0f1115')
-            .onNodeClick(node => {
-              window.location.href = `/notes/${node.id}`;
-            });
+              const loadingEl = document.getElementById('force-graph-loading');
 
-          // Auto-zoom to fit on mobile
-          if (window.innerWidth < 768) {
-            setTimeout(() => graph.zoomToFit(400, 20), 500);
-          }
+              const dataEl = document.getElementById('graph-data');
+              const data = JSON.parse(dataEl?.textContent || '{"nodes":[],"links":[]}');
 
-          // Re-zoom on resize
-          let resizeTimeout;
-          window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-              if (window.innerWidth < 768) {
-                graph.zoomToFit(400, 20);
+              try {
+                const ForceGraph = await import('force-graph').then(m => m.default);
+
+                if (loadingEl) loadingEl.style.display = 'none';
+
+                const graph = ForceGraph()(container)
+                  .graphData(data)
+                  .nodeId('id')
+                  .nodeLabel('name')
+                  .nodeVal('val')
+                  .linkSource('source')
+                  .linkTarget('target')
+                  .nodeColor(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f59e0b')
+                  .linkColor(() => {
+                    const c = getComputedStyle(document.documentElement).getPropertyValue('--muted-dim').trim();
+                    return c || '#71717a';
+                  })
+                  .backgroundColor(() => 'transparent')
+                  .onNodeClick(node => {
+                    window.location.href = `/notes/${node.id}`;
+                  });
+
+                if (window.innerWidth < 768) {
+                  setTimeout(() => graph.zoomToFit(400, 20), 500);
+                }
+
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                  clearTimeout(resizeTimeout);
+                  resizeTimeout = setTimeout(() => {
+                    if (window.innerWidth < 768) {
+                      graph.zoomToFit(400, 20);
+                    }
+                  }, 300);
+                });
+              } catch (err) {
+                console.error('Failed to load force-graph:', err);
+                if (loadingEl) loadingEl.style.display = 'none';
+                container.innerHTML = '<p class="graph-error">Unable to load graph.</p>';
               }
-            }, 300);
-          });
-        } catch (err) {
-          console.error('Failed to load force-graph:', err);
-          container.innerHTML = '<p class="graph-error">Unable to load graph.</p>';
-        }
-      })();
-    </script>
+            }
+          }, { threshold: 0.1 });
+
+          observer.observe(container);
+        })();
+      </script>
+    </>
   ) : (
     <div class="graph-empty">
       <p>No notes yet</p>
@@ -85,9 +108,10 @@ const hasNotes = notes.length > 0;
   #force-graph-container {
     width: 100%;
     height: 500px;
-    background: rgba(15, 17, 21, 0.5);
-    border-radius: 8px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
     overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--fg) 5%, transparent);
   }
 
   .graph-empty {
@@ -95,13 +119,26 @@ const hasNotes = notes.length > 0;
     align-items: center;
     justify-content: center;
     height: 500px;
-    background: rgba(15, 17, 21, 0.5);
-    border-radius: 8px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid color-mix(in srgb, var(--fg) 5%, transparent);
   }
 
   .graph-empty p {
     color: var(--muted);
     font-size: 0.95rem;
+  }
+
+  .graph-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    z-index: 1;
+    pointer-events: none;
   }
 
   .graph-error {

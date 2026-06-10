@@ -87,12 +87,12 @@
 
 ### 5 — Name Generator Re-integration
 
-- [ ] Create `src/content/notes/name-generator.md` with `layout: tool` frontmatter
-- [ ] Build `ToolLayout.astro` — renders note prose followed by `<NameGenerator />`
-- [ ] Convert existing `/name-generator.astro` page to the new layout-driven model
-- [ ] Re-route `/name-generator` to serve from content collection
-- [ ] Add Name Generator as a synthetic node in the graph dataset
-- [ ] Notes can link to it via `[[Name Generator]]`
+- [x] Create `src/content/notes/name-generator.md` with `layout: tool` frontmatter
+- [x] Build `ToolLayout.astro` — renders note prose followed by `<NameGenerator />`
+- [x] Convert existing `/name-generator.astro` page to the new layout-driven model
+- [x] Re-route `/name-generator` to serve from content collection
+- [x] Add Name Generator as a synthetic node in the graph dataset (auto — it's a .md file now)
+- [x] Notes can link to it via `[[Name Generator]]` (auto — wikilink plugin picks up all .md files)
 
 ### 6 — Polish
 

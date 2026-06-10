@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import ToolLayout from "../../layouts/ToolLayout.astro";
 import { getCollection, render } from "astro:content";
 import { getBacklinks, getNoteDate } from "../../lib/backlinks";
 
@@ -16,96 +17,106 @@ const { Content } = await render(note);
 const backlinks = getBacklinks(note.slug);
 const date = getNoteDate(note.slug, note.data.date);
 const tags = note.data.tags;
+const isTool = note.data.layout === "tool";
 ---
 
-<Layout title={note.data.title}>
-<main>
-  <h1>{note.data.title || note.slug}</h1>
+{
+  isTool ? (
+    <ToolLayout slug={note.slug}>
+      <Content />
+    </ToolLayout>
+  ) : (
+    <Layout title={note.data.title}>
+    <main>
+      <article class="note-page">
+        <header class="note-header">
+          <h1>{note.data.title || note.slug}</h1>
 
-  {
-    (date || (tags && tags.length > 0)) && (
-      <p class="meta">
-        {date && <time datetime={date}>{date}</time>}
-        {date && tags && tags.length > 0 && <span class="sep">·</span>}
-        {tags && tags.length > 0 && (
-          <>
-            {tags.map((tag) => (
-              <a href={`/tags/${tag}`} class="tag">{tag}</a>
-            ))}
-          </>
-        )}
-      </p>
-    )
-  }
+          {
+            (date || (tags && tags.length > 0)) && (
+              <p class="note-meta">
+                {date && <time datetime={date}>{date}</time>}
+                {date && tags && tags.length > 0 && <span class="meta-sep">&#183;</span>}
+                {tags && tags.length > 0 && (
+                  <>
+                    {tags.map((tag) => (
+                      <a href={`/tags/${encodeURIComponent(tag)}`} class="note-tag">{tag}</a>
+                    ))}
+                  </>
+                )}
+              </p>
+            )
+          }
+        </header>
 
-  <Content />
+        <div class="prose">
+          <Content />
+        </div>
 
-  {
-    backlinks.length > 0 && (
-      <section class="backlinks">
-        <h2>Linked from</h2>
-        <ul>
-          {backlinks.map((link) => (
-            <li><a href={`/notes/${link.slug}`}>{link.title}</a></li>
-          ))}
-        </ul>
-      </section>
-    )
-  }
-</main>
+        {
+          backlinks.length > 0 && (
+            <section class="backlinks">
+              <h2>Linked from</h2>
+              <ul>
+                {backlinks.map((link) => (
+                  <li><a href={`/notes/${link.slug}`}>{link.title || link.slug}</a></li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+      </article>
+    </main>
 
-<style>
-  main {
-    max-width: 42rem;
-    margin: 4rem auto;
-    padding: 0 1rem;
-  }
+    <style>
+      .note-page {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 4rem 1rem 6rem;
+      }
 
-  .backlinks {
-    margin-top: 4rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--accent);
-  }
+      .note-header {
+        margin-bottom: 2rem;
+      }
 
-  .backlinks h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+      .note-header h1 {
+        font-size: clamp(1.8rem, 4vw, 2.4rem);
+        font-weight: 700;
+        font-family: var(--font-display);
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        margin-bottom: 0.75rem;
+        color: var(--fg);
+      }
 
-  .backlinks ul {
-    list-style: none;
-    padding: 0;
-  }
+      .note-meta {
+        font-size: 0.85rem;
+        color: var(--muted);
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+        font-family: var(--font-mono);
+      }
 
-  .backlinks li {
-    margin-bottom: 0.5rem;
-  }
+      .meta-sep {
+        color: var(--muted-dim);
+      }
 
-  .meta {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin: 0.5rem 0 2rem;
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    flex-wrap: wrap;
-  }
+      .note-tag {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .note-tag:hover {
+        opacity: 0.75;
+      }
 
-  .sep {
-    opacity: 0.4;
-  }
-
-  .tag {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .tag:hover {
-    opacity: 0.7;
-  }
-</style>
-</Layout>
+      @media (max-width: 640px) {
+        .note-page {
+          padding: 2rem 1rem 4rem;
+        }
+      }
+    </style>
+    </Layout>
+  )
+}

@@ -1,0 +1,84 @@
+---
+import Layout from "./Layout.astro";
+import NameGenerator from "../components/NameGenerator.astro";
+
+export interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+
+const TOOL_INFO: Record<string, { title: string }> = {
+  "name-generator": { title: "Name Generator" },
+};
+const toolInfo = TOOL_INFO[slug];
+const pageTitle = toolInfo?.title || "Tool";
+---
+
+<Layout title={pageTitle}>
+  <main class="tool-page">
+    <nav class="breadcrumb">
+      <a href="/">&larr; ignamiranda</a>
+    </nav>
+
+    <article class="tool-prose">
+      <slot />
+    </article>
+
+    <section class="tool-body">
+      {slug === "name-generator" && <NameGenerator />}
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .tool-page {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .breadcrumb {
+    margin-bottom: 2.5rem;
+  }
+  .breadcrumb a {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .breadcrumb a:hover {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  .tool-prose {
+    max-width: 42rem;
+    margin: 0 auto 2.5rem;
+  }
+
+  .tool-prose :global(h1) {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 700;
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+    color: var(--fg);
+  }
+
+  .tool-prose :global(p) {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .tool-body {
+    width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    .tool-page {
+      padding: 1.5rem 1rem 3rem;
+    }
+  }
+</style>

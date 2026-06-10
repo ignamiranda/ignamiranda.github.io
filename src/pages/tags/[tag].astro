@@ -1,6 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
+import { previewText as _previewText } from "../../lib/markdown";
+import { tagSlug } from "../../lib/slugify";
 
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
@@ -11,7 +13,7 @@ export async function getStaticPaths() {
     }
   }
   return [...tags].map(tag => ({
-    params: { tag },
+    params: { tag: tagSlug(tag) },
     props: { tag },
   }));
 }
@@ -21,30 +23,15 @@ const notes = (await getCollection("notes"))
   .filter(n => (n.data.tags || []).includes(tag))
   .sort((a, b) => (b.data.date || "").localeCompare(a.data.date || ""));
 
-function stripMarkdown(body: string): string {
-  return body
-    .replace(/^#+\s+/gm, "")
-    .replace(/[*_~`]/g, "")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/>\s*/g, "")
-    .replace(/---+/g, "")
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function previewText(body: string): string {
-  const stripped = stripMarkdown(body);
-  if (stripped.length <= 200) return stripped;
-  return stripped.substring(0, 200).replace(/\s+\S*$/, "") + "\u2026";
+  return _previewText(body, 200);
 }
 ---
 
 <Layout title={`#${tag}`}>
   <main>
     <section class="section">
-      <h2 class="section-title">#{tag}</h2>
+      <h2 class="section-heading"># {tag}</h2>
       {notes.length > 0 ? (
         <div class="card-grid">
           {notes.map((note) => {
@@ -63,75 +50,21 @@ function previewText(body: string): string {
           })}
         </div>
       ) : (
-        <p class="note-empty">No notes with this tag.</p>
+        <p class="empty-text">No notes with this tag.</p>
       )}
     </section>
   </main>
 </Layout>
 
 <style>
-  .section {
-    max-width: 52rem;
-    margin: 0 auto;
-    padding: 4rem 2rem;
-  }
-
-  .section-title {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 1.5rem;
-  }
-
-  .card-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .card {
-    display: block;
-    padding: 1.5rem;
-    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
-    border-radius: 12px;
-    transition: all 0.25s;
-    color: var(--fg);
-    text-decoration: none;
-  }
-
-  .card:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 4%, transparent);
-    opacity: 1;
-    transform: translateY(-2px);
-  }
-
-  .card-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
-    background: linear-gradient(135deg, var(--accent), var(--accent3));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
   .card-date {
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--muted);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.35rem;
   }
 
-  .card-desc {
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.5;
-    margin-bottom: 0.75rem;
-  }
-
-  .note-empty {
+  .empty-text {
     color: var(--muted);
     font-size: 0.95rem;
   }

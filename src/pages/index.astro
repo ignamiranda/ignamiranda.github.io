@@ -3,52 +3,38 @@ import Layout from "../layouts/Layout.astro";
 import ForceGraph from "../components/ForceGraph.astro";
 import { getCollection } from "astro:content";
 import { getAllTags } from "../lib/backlinks";
+import { previewText as _previewText } from "../lib/markdown";
 const notes = await getCollection("notes");
 const allTags = getAllTags();
 
-function stripMarkdown(body: string): string {
-  return body
-    .replace(/^#+\s+/gm, "")
-    .replace(/[*_~`]/g, "")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/>\s*/g, "")
-    .replace(/---+/g, "")
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function previewText(body: string): string {
-  const stripped = stripMarkdown(body);
-  if (stripped.length <= 150) return stripped;
-  return stripped.substring(0, 150).replace(/\s+\S*$/, "") + "\u2026";
+  return _previewText(body, 150);
 }
 ---
 
 <Layout title="ignamiranda">
-  <main>
+  <main id="main-content">
+    <!-- ─── Hero ─── -->
     <section class="hero">
-      <h1>
-        <span class="name">ignamiranda</span>
-        <span class="tagline">builds things</span>
-      </h1>
-      <p class="blurb">
-        A playground for software, design, and games.
-      </p>
-      <nav class="links">
-        <a href="https://github.com/ignamiranda" target="_blank">GitHub</a>
+      <h1 class="hero-name">ignamiranda</h1>
+      <div class="hero-accent" aria-hidden="true"></div>
+      <p class="hero-tagline">builds things</p>
+      <p class="hero-blurb">A playground for software, design, and games.</p>
+      <nav class="hero-links">
+        <a href="https://github.com/ignamiranda" target="_blank" rel="noopener">GitHub</a>
         <a href="mailto:ignamiranda@users.noreply.github.com">Email</a>
       </nav>
     </section>
 
+    <!-- ─── Graph ─── -->
     <section class="section" id="graph">
-      <h2 class="section-title">Graph</h2>
+      <h2 class="section-heading">Graph</h2>
       <ForceGraph />
     </section>
 
+    <!-- ─── Generators ─── -->
     <section class="section" id="generators">
-      <h2 class="section-title">Generators</h2>
+      <h2 class="section-heading">Generators</h2>
       <div class="card-grid">
         <a href="/name-generator" class="card">
           <h3 class="card-title">Name Generator</h3>
@@ -60,8 +46,9 @@ function previewText(body: string): string {
       </div>
     </section>
 
+    <!-- ─── Notes ─── -->
     <section class="section" id="notes">
-      <h2 class="section-title">Notes</h2>
+      <h2 class="section-heading">Notes</h2>
       {notes.length > 0 ? (
         <>
           <a href="#" class="random-note" id="random-note-btn">Random note</a>
@@ -80,23 +67,24 @@ function previewText(body: string): string {
           </div>
         </>
       ) : (
-        <p class="note-empty">Nothing here yet.</p>
+        <p class="empty-text">Nothing here yet.</p>
       )}
     </section>
 
+    <!-- ─── Tags ─── -->
     {allTags.length > 0 && (
     <section class="section" id="tags">
-      <h2 class="section-title">Tags</h2>
+      <h2 class="section-heading">Tags</h2>
       <div class="tag-cloud">
         {allTags.map(t => (
-          <a href={`/tags/${t.tag}`} class="tag-cloud-item">{t.tag}<sup>{t.count}</sup></a>
+          <a href={`/tags/${t.tag}`} class="tag-item">{t.tag}<sup aria-hidden="true">{t.count}</sup><span class="sr-only">{t.count} notes</span></a>
         ))}
       </div>
     </section>
     )}
 
     <script type="application/json" id="index-notes-data">
-      {JSON.stringify(notes.map((n) => ({ slug: n.slug, title: n.data.title })))}
+      {JSON.stringify(notes.map((n) => n.slug))}
     </script>
 
     <script>
@@ -104,12 +92,17 @@ function previewText(body: string): string {
         const btn = document.getElementById("random-note-btn");
         const dataEl = document.getElementById("index-notes-data");
         if (!btn || !dataEl) return;
-        const notes = JSON.parse(dataEl.textContent || "[]");
+        let slugs;
+        try {
+          slugs = JSON.parse(dataEl.textContent || "[]");
+        } catch {
+          return;
+        }
         btn.addEventListener("click", function (e) {
           e.preventDefault();
-          if (!notes.length) return;
-          var pick = notes[Math.floor(Math.random() * notes.length)];
-          window.location.href = "/notes/" + encodeURIComponent(pick.slug);
+          if (!slugs.length) return;
+          var pick = slugs[Math.floor(Math.random() * slugs.length)];
+          window.location.href = "/notes/" + encodeURIComponent(pick);
         });
       })();
     </script>
@@ -117,123 +110,65 @@ function previewText(body: string): string {
 </Layout>
 
 <style>
-    .hero {
+  /* ─── Hero ─── */
+  .hero {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 4rem 2rem;
+    padding: 6rem 2rem 4rem;
   }
 
-  h1 {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
+  .hero-name {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 10vw, 5.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    color: var(--fg);
   }
 
-  .name {
-    font-size: clamp(2.5rem, 8vw, 5rem);
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .hero-accent {
+    width: 3rem;
+    height: 3px;
+    background: var(--accent);
+    margin: 1.25rem auto;
+    border-radius: 2px;
   }
 
-  .tagline {
-    font-size: clamp(1.2rem, 3vw, 2rem);
+  .hero-tagline {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
     color: var(--muted);
+    margin-bottom: 0.75rem;
     font-family: var(--font-mono);
   }
 
-  .blurb {
-    font-size: 1.1rem;
-    max-width: 32rem;
+  .hero-blurb {
+    font-size: 1.05rem;
+    max-width: 28rem;
     color: var(--muted);
     margin-bottom: 2rem;
+    line-height: 1.6;
   }
 
-  .links {
+  .hero-links {
     display: flex;
     gap: 1.5rem;
   }
 
-  .links a {
+  .hero-links a {
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    color: var(--fg);
-    border: 1px solid var(--muted);
-    padding: 0.5rem 1.25rem;
-    border-radius: 999px;
-    transition: all 0.2s;
-  }
-
-  .links a:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    opacity: 1;
-  }
-
-  /* ─── Sections ─── */
-  .section {
-    max-width: 52rem;
-    margin: 0 auto;
-    padding: 4rem 2rem;
-  }
-
-  .section-title {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 0.85rem;
     color: var(--muted);
-    margin-bottom: 1.5rem;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
   }
 
-  .card-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .card {
-    display: block;
-    padding: 1.5rem;
-    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
-    border-radius: 12px;
-    transition: all 0.25s;
-    color: var(--fg);
-    text-decoration: none;
-  }
-  .card:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 4%, transparent);
-    opacity: 1;
-    transform: translateY(-2px);
-  }
-
-  .card-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
-    background: linear-gradient(135deg, var(--accent), var(--accent3));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .card-desc {
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.5;
-    margin-bottom: 0.75rem;
-  }
-
-  .card-meta {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
+  .hero-links a:hover {
     color: var(--accent);
+    border-color: var(--accent);
+    opacity: 1;
   }
 
   /* ─── Notes ─── */
@@ -243,48 +178,68 @@ function previewText(body: string): string {
     font-size: 0.8rem;
     color: var(--muted);
     text-decoration: none;
-    margin-bottom: 1rem;
-    transition: color 0.2s;
+    margin-bottom: 1.25rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.2s, color 0.2s;
   }
   .random-note:hover {
     color: var(--accent);
+    border-color: var(--accent);
     opacity: 1;
   }
 
-  .note-empty {
+  .empty-text {
     color: var(--muted);
     font-size: 0.95rem;
   }
 
   /* ─── Graph ─── */
   #graph {
-    padding: 0 2rem 4rem;
+    max-width: none;
+    padding: 0 2rem 5rem;
+  }
+
+  #graph .section-heading {
+    max-width: 52rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* ─── Tag cloud ─── */
   .tag-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1rem;
+    gap: 0.5rem 1.25rem;
   }
 
-  .tag-cloud-item {
+  .tag-item {
     color: var(--muted);
     font-family: var(--font-mono);
     font-size: 0.9rem;
     text-decoration: none;
     transition: color 0.2s;
   }
-
-  .tag-cloud-item:hover {
+  .tag-item:hover {
     color: var(--accent);
     opacity: 1;
   }
-
-  .tag-cloud-item sup {
+  .tag-item sup {
     font-size: 0.7rem;
-    color: var(--muted);
-    opacity: 0.5;
-    margin-left: 0.15em;
+    color: var(--muted-dim);
+    margin-left: 0.2em;
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding: 4rem 1.5rem 3rem;
+    }
+    .section {
+      padding: 3rem 1rem;
+    }
+    #graph {
+      padding: 0 1rem 3rem;
+    }
   }
 </style>

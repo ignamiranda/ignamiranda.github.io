@@ -1,19 +1,11 @@
 import { execSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import yaml from "js-yaml";
+import { slugify } from "./slugify";
+import { stripMarkdown, previewText as extractPreview } from "./markdown";
 
 const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-}
 
 function parseFrontmatter(
   content: string,
@@ -31,24 +23,27 @@ function extractTitle(body: string): string | null {
   return match ? match[1].trim() : null;
 }
 
-interface NoteInfo {
-  slug: string;
-  title: string;
-  links: string[];
-}
-
 export interface Backlink {
   slug: string;
   title: string;
 }
 
-let cachedBacklinks: Map<string, Backlink[]> | null = null;
+interface ReadNoteResult {
+  slug: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  links: string[];
+  tags: string[];
+}
 
-function buildBacklinkMap(): Map<string, Backlink[]> {
-  if (cachedBacklinks) return cachedBacklinks;
+let readAllCache: ReadNoteResult[] | null = null;
 
-  const notesDir = process.cwd() + "/src/content/notes";
-  const notes: NoteInfo[] = [];
+function readAllNotes(): ReadNoteResult[] {
+  if (readAllCache) return readAllCache;
+
+  const notesDir = path.join(process.cwd(), "src", "content", "notes");
+  const results: ReadNoteResult[] = [];
 
   try {
     const files = readdirSync(notesDir);
@@ -56,7 +51,7 @@ function buildBacklinkMap(): Map<string, Backlink[]> {
       if (!file.endsWith(".md")) continue;
       const name = file.slice(0, -3);
       const slug = slugify(name);
-      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
+      const content = readFileSync(path.join(notesDir, file), "utf-8");
       const { data, body } = parseFrontmatter(content);
       const title =
         (data.title as string | undefined) || extractTitle(body) || slug;
@@ -64,19 +59,30 @@ function buildBacklinkMap(): Map<string, Backlink[]> {
       const links: string[] = [];
       for (const match of body.matchAll(WIKILINK_RE)) {
         const targetSlug = slugify(match[1].trim());
-        // Don't count self-links
         if (targetSlug !== slug) {
           links.push(targetSlug);
         }
       }
 
-      notes.push({ slug, title, links });
+      const tags = (data.tags as string[]) || [];
+
+      results.push({ slug, title, body, data, links, tags });
     }
-  } catch {
-    // Notes directory may not exist or be empty
+  } catch (err) {
+    console.warn("backlinks: could not read notes directory", err);
   }
 
-  // Build incoming links map
+  readAllCache = results;
+  return results;
+}
+
+let cachedBacklinks: Map<string, Backlink[]> | null = null;
+
+function buildBacklinkMap(): Map<string, Backlink[]> {
+  if (cachedBacklinks) return cachedBacklinks;
+
+  const notes = readAllNotes();
+
   const backlinks = new Map<string, Backlink[]>();
   for (const note of notes) {
     backlinks.set(note.slug, []);
@@ -110,26 +116,8 @@ let noteCache: NoteEntry[] | null = null;
 /** Return a list of all notes (slug + title). */
 export function getAllNotes(): NoteEntry[] {
   if (noteCache) return noteCache;
-
-  const notesDir = process.cwd() + "/src/content/notes";
-  const notes: NoteEntry[] = [];
-
-  try {
-    const files = readdirSync(notesDir);
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const slug = slugify(file.slice(0, -3));
-      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
-      const { data, body } = parseFrontmatter(content);
-      const title = (data.title as string | undefined) || extractTitle(body) || slug;
-      notes.push({ slug, title });
-    }
-  } catch {
-    // Directory may not exist
-  }
-
-  noteCache = notes;
-  return notes;
+  noteCache = readAllNotes().map((n) => ({ slug: n.slug, title: n.title }));
+  return noteCache;
 }
 
 /** Return a map of all backlinks (slug → Backlink[]). */
@@ -144,54 +132,19 @@ export interface SearchEntry {
   tags: string[];
 }
 
-function stripMarkdown(body: string): string {
-  return body
-    .replace(/^#+\s+/gm, "")
-    .replace(/[*_~`]/g, "")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/>\s*/g, "")
-    .replace(/---+/g, "")
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function extractPreview(body: string): string {
-  const stripped = stripMarkdown(body);
-  if (stripped.length <= 200) return stripped;
-  return stripped.substring(0, 200).replace(/\s+\S*$/, "") + "\u2026";
-}
-
 let searchCache: SearchEntry[] | null = null;
 
 /** Build search index data: slug, title, preview, tags for every note. */
 export function generateSearchIndex(): SearchEntry[] {
   if (searchCache) return searchCache;
 
-  const notesDir = process.cwd() + "/src/content/notes";
-  const entries: SearchEntry[] = [];
-
-  try {
-    const files = readdirSync(notesDir);
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const slug = slugify(file.slice(0, -3));
-      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
-      const { data, body } = parseFrontmatter(content);
-      const title = (data.title as string | undefined) || extractTitle(body) || slug;
-      const tags = (data.tags as string[]) || [];
-      const preview =
-        (data.description as string | undefined) || extractPreview(body);
-
-      entries.push({ slug, title, preview, tags });
-    }
-  } catch {
-    // Directory may not exist
-  }
-
-  searchCache = entries;
-  return entries;
+  searchCache = readAllNotes().map((n) => ({
+    slug: n.slug,
+    title: n.title,
+    preview: (n.data.description as string | undefined) || extractPreview(n.body),
+    tags: n.tags,
+  }));
+  return searchCache;
 }
 
 export interface TagEntry {
@@ -206,21 +159,10 @@ export function getAllTags(): TagEntry[] {
   if (tagCache) return tagCache;
 
   const tagCounts = new Map<string, number>();
-  const notesDir = process.cwd() + "/src/content/notes";
-
-  try {
-    const files = readdirSync(notesDir);
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const content = readFileSync(`${notesDir}/${file}`, "utf-8");
-      const { data } = parseFrontmatter(content);
-      const tags = (data.tags as string[]) || [];
-      for (const tag of tags) {
-        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-      }
+  for (const note of readAllNotes()) {
+    for (const tag of note.tags) {
+      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
     }
-  } catch {
-    // Directory may not exist
   }
 
   const sorted = [...tagCounts.entries()]
@@ -240,26 +182,38 @@ export function getNoteDate(slug: string, frontmatterDate?: string): string | nu
   const cached = dateCache.get(slug);
   if (cached !== undefined) return cached;
 
-  const notesDir = process.cwd() + "/src/content/notes";
+  const notesDir = path.join(process.cwd(), "src", "content", "notes");
+
+  // Find the actual filename from the notes directory
+  let fileName: string | undefined;
   try {
     const files = readdirSync(notesDir);
-    const file = files.find(
+    fileName = files.find(
       (f) => f.endsWith(".md") && slugify(f.slice(0, -3)) === slug,
     );
-    if (!file) {
-      dateCache.set(slug, null);
-      return null;
-    }
+  } catch (err) {
+    console.warn("backlinks: could not read notes directory for getNoteDate", err);
+    dateCache.set(slug, null);
+    return null;
+  }
 
+  if (!fileName) {
+    dateCache.set(slug, null);
+    return null;
+  }
+
+  try {
+    const filePath = path.join(notesDir, fileName);
     const result = execSync(
-      `git log -1 --format=%ad --date=short -- "${notesDir}/${file}"`,
+      `git log -1 --format=%ad --date=short -- "${filePath}"`,
       { encoding: "utf-8", cwd: process.cwd() },
     ).trim();
 
     const date = result || null;
     dateCache.set(slug, date);
     return date;
-  } catch {
+  } catch (err) {
+    console.warn("backlinks: git log failed for getNoteDate", err);
     dateCache.set(slug, null);
     return null;
   }

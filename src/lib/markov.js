@@ -57,6 +57,10 @@ export class MarkovChain {
       attempts++;
     }
 
+    if (names.size < count) {
+      console.warn(`markov: requested ${count} names, generated ${names.size} unique names`);
+    }
+
     return Array.from(names);
   }
 }

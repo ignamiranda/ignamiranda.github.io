@@ -1,30 +1,17 @@
 import { readdirSync } from "node:fs";
+import path from "node:path";
 import { visit } from "unist-util-visit";
 import type { Root } from "mdast";
+import { slugify } from "./slugify";
 
 const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
-
-/**
- * Slugify a wikilink target the same way Astro slugifies content collection
- * entries: lowercase, spaces to hyphens, strip non-alphanumeric characters.
- */
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-}
 
 export function remarkWikilinks() {
   // Build slug → original filename map at setup time
   const slugMap = new Map<string, string>();
 
   try {
-    const notesDir = process.cwd() + "/src/content/notes";
+    const notesDir = path.join(process.cwd(), "src", "content", "notes");
     const files = readdirSync(notesDir);
     for (const file of files) {
       if (!file.endsWith(".md")) continue;
@@ -32,8 +19,8 @@ export function remarkWikilinks() {
       const slug = slugify(name);
       slugMap.set(slug, name);
     }
-  } catch {
-    // Notes directory may not exist yet or be empty — empty map is fine
+  } catch (err) {
+    console.warn("remark-wikilinks: could not read notes directory", err);
   }
 
   return (tree: Root) => {

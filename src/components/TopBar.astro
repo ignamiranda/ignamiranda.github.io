@@ -16,7 +16,7 @@ const notes = getAllNotes();
           placeholder="Search notes..."
           aria-label="Search notes"
         />
-        <div class="search-dropdown" id="search-dropdown"></div>
+        <div class="search-dropdown" id="search-dropdown" aria-live="polite"></div>
       </div>
     </nav>
   </div>
@@ -27,8 +27,7 @@ const notes = getAllNotes();
 </script>
 
 <script>
-  import MiniSearch from "minisearch";
-
+(() => {
   // -- Random link --
   const link = document.getElementById("random-link");
   const dataEl = document.getElementById("topbar-notes-data");
@@ -54,8 +53,12 @@ const notes = getAllNotes();
     async function ensureIndex() {
       if (fetched) return;
       fetched = true;
+      let success = false;
       try {
-        const res = await fetch("/search-index.json");
+        const [MiniSearch, res] = await Promise.all([
+          import("minisearch").then(m => m.default || m),
+          fetch("/search-index.json"),
+        ]);
         const docs = await res.json();
         if (!docs.length) return;
         const ms = new MiniSearch({
@@ -64,9 +67,11 @@ const notes = getAllNotes();
         });
         ms.addAll(docs);
         miniSearch = ms;
+        success = true;
       } catch {
-        // index unavailable — no search
+        // index unavailable
       }
+      if (!success) fetched = false;
     }
 
     function escapeHtml(str) {
@@ -84,8 +89,8 @@ const notes = getAllNotes();
       }
       const results = miniSearch.search(query, { prefix: true, fuzzy: 0.2 });
       if (!results.length) {
-        searchDropdown.innerHTML = "";
-        searchDropdown.classList.remove("visible");
+        searchDropdown.innerHTML = '<div class="search-no-results">No notes found for "' + escapeHtml(query) + '"</div>';
+        searchDropdown.classList.add("visible");
         selectedIndex = -1;
         return;
       }
@@ -93,7 +98,7 @@ const notes = getAllNotes();
       searchDropdown.innerHTML = results
         .map(
           (r, i) =>
-            `<div class="search-result-item" data-index="${i}" data-slug="${r.slug}">
+            `<div class="search-result-item" data-index="${i}" data-slug="${escapeHtml(r.slug)}" role="option">
               <div class="search-result-title">${escapeHtml(r.title)}</div>
               <div class="search-result-preview">${escapeHtml(r.preview)}</div>
             </div>`,
@@ -136,17 +141,24 @@ const notes = getAllNotes();
       searchInput.blur();
     }
 
-    // Lazy fetch on focus so first interaction loads the index
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.repeat) {
+        const tag = e.target.tagName;
+        if (tag !== "INPUT" && tag !== "TEXTAREA" && !e.target.isContentEditable) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      }
+    });
+
     searchInput.addEventListener("focus", () => {
       ensureIndex();
     });
 
-    // Re-query on each keystroke
     searchInput.addEventListener("input", () => {
       renderResults(searchInput.value);
     });
 
-    // Keyboard navigation
     searchInput.addEventListener("keydown", (e) => {
       if (!searchDropdown.classList.contains("visible")) return;
       switch (e.key) {
@@ -170,13 +182,11 @@ const notes = getAllNotes();
       }
     });
 
-    // Click on a result item
     searchDropdown.addEventListener("click", (e) => {
       const item = e.target.closest(".search-result-item");
       if (item) navigateTo(item.dataset.slug);
     });
 
-    // Click outside → close
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".search-wrapper")) {
         searchDropdown.classList.remove("visible");
@@ -184,4 +194,5 @@ const notes = getAllNotes();
       }
     });
   }
+})();
 </script>

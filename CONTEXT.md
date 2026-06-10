@@ -9,8 +9,8 @@ A single-page site that will grow organically with writing, projects, notes, and
 _Avoid_: Portfolio, blog, resume site
 
 **Content**:
-Authored in Markdown (.md) and rendered by the framework.
-_Avoid_: Posts, articles
+Authored in Markdown (.md) and rendered by the framework. May take the form of notes (shorter, informal) or long-form notes in the style of articles (deeper explorations, essays).
+_Avoid_: Posts, blog entries
 
 **Skeleton**:
 A minimal but polished first version — dark theme, neon accents, single home page — deployed immediately and iterated over time.
@@ -30,6 +30,9 @@ Software, writing, design/visual art, and games/interactive — multi-disciplina
 **Name Generator**:
 Client-side Markov-chain tool for creating custom name generators from one user-provided example list, with advanced controls. First content piece — acts as a reference implementation that demonstrates how the site can host interactive tools. Lives on its own page (`/name-generator`), linked from the Generators section on the home page.
 _Avoid_: Fixed race lists, server-side generation, syllable tables
+
+**Shared World Villains**:
+A draft note on a game design idea for MMORPGs — a designer-toolkit for persistent NPC villains that evolve based on collective player actions, without infringing the Nemesis System patent. Lives under `src/content/notes/shared-world-villains.md`.
 
 **Draft**:
 A saved generator configuration — name, example list, and settings. One per generator, stored in browser localStorage, auto-saved debounced. User names each draft on creation. Auto-restores last active draft on return, with ability to switch.
