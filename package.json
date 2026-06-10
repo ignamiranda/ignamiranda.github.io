@@ -5,13 +5,21 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "astro": "^5.0.0",
     "force-graph": "^1.51.4",
     "js-yaml": "^4.2.0",
     "minisearch": "^7.2.0",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
   }
 }
