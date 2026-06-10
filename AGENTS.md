@@ -38,3 +38,13 @@ Always run `typecheck` after making changes.
 - **Graph:** `force-graph` rendered client-side with IntersectionObserver lazy load. Build-time nodes/edges JSON.
 - **Tests:** Vitest configured, no tests exist yet. Create tests at `src/**/*.test.ts` or `*.spec.ts`.
 - **TSConfig:** Extends `astro/tsconfigs/strict`.
+
+## opencode custom commands
+
+- Custom commands are markdown files in `~/.config/opencode/commands/` (global) or `.opencode/commands/` (project).
+- Frontmatter: `description`, `agent`, `model`, `subtask`. The body is the prompt template.
+- Template supports `$ARGUMENTS`, `$1`, `$2` etc. for args, ``!`shell-cmd` `` for shell output, and `@filepath` for file includes.
+
+## opencode permissions
+
+- `~/.config/opencode/` is allowed for read without prompting.
