@@ -15,8 +15,8 @@ Always run `typecheck` after making changes.
 ## Workflow
 
 - **Branch protection:** `main` is protected — PR required, no direct pushes. Self-merge OK (no review needed).
-- **Push workflow:** Create branch → push → `gh pr create` → user merges.
-- **GH_TOKEN** stored in `.env` — source it in each shell: `Get-Content .env | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "env:$k" -Value $v.Trim('"') }`
+- **Agent never merges PRs.** Create branch → push → `gh pr create` → hand off. User merges.
+- **GH_TOKEN** stored in `.env` — run `/env` to source it into the shell.
 - CI deploys to GitHub Pages on push to `main`.
 
 ## Architecture
@@ -38,3 +38,27 @@ Always run `typecheck` after making changes.
 - **Graph:** `force-graph` rendered client-side with IntersectionObserver lazy load. Build-time nodes/edges JSON.
 - **Tests:** Vitest configured, no tests exist yet. Create tests at `src/**/*.test.ts` or `*.spec.ts`.
 - **TSConfig:** Extends `astro/tsconfigs/strict`.
+
+## opencode custom commands
+
+- Custom commands are markdown files in `~/.config/opencode/commands/` (global) or `.opencode/commands/` (project).
+- Frontmatter: `description`, `agent`, `model`, `subtask`. The body is the prompt template.
+- Template supports `$ARGUMENTS`, `$1`, `$2` etc. for args, ``!`shell-cmd` `` for shell output, and `@filepath` for file includes.
+
+## opencode permissions
+
+- `~/.config/opencode/` is allowed for read without prompting.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked as GitHub issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+All five canonical roles use their default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` at the repo root. See `docs/agents/domain.md`.
