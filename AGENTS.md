@@ -15,8 +15,8 @@ Always run `typecheck` after making changes.
 ## Workflow
 
 - **Branch protection:** `main` is protected — PR required, no direct pushes. Self-merge OK (no review needed).
-- **Push workflow:** Create branch → push → `gh pr create` → user merges.
-- **GH_TOKEN** stored in `.env` — source it in each shell: `Get-Content .env | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "env:$k" -Value $v.Trim('"') }`
+- **Agent never merges PRs.** Create branch → push → `gh pr create` → hand off. User merges.
+- **GH_TOKEN** stored in `.env` — run `/env` to source it into the shell.
 - CI deploys to GitHub Pages on push to `main`.
 
 ## Architecture
