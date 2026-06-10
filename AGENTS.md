@@ -48,3 +48,17 @@ Always run `typecheck` after making changes.
 ## opencode permissions
 
 - `~/.config/opencode/` is allowed for read without prompting.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked as GitHub issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+All five canonical roles use their default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `CONTEXT.md` at the repo root. See `docs/agents/domain.md`.
