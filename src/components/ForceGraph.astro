@@ -4,11 +4,17 @@ import { getAllNotes, getAllBacklinks } from "../lib/backlinks";
 const notes = getAllNotes();
 const backlinks = getAllBacklinks();
 
-const nodes = notes.map(n => ({
-  id: n.slug,
-  name: n.title,
-  val: (backlinks.get(n.slug)?.length || 0) + 1,
-}));
+const radius = 5;
+const nodes = notes.map((n, i) => {
+  const angle = (i / notes.length) * 2 * Math.PI;
+  return {
+    id: n.slug,
+    name: n.title,
+    val: (backlinks.get(n.slug)?.length || 0) + 1,
+    x: Math.cos(angle) * radius,
+    y: Math.sin(angle) * radius,
+  };
+});
 
 const links: { source: string; target: string }[] = [];
 for (const [slug, sources] of backlinks) {
@@ -49,9 +55,9 @@ const hasNotes = notes.length > 0;
               try {
                 const ForceGraph = await import('force-graph').then(m => m.default);
 
-                if (loadingEl) loadingEl.style.display = 'none';
-
                 const graph = ForceGraph()(container)
+                  .width(container.clientWidth)
+                  .height(container.clientHeight)
                   .graphData(data)
                   .nodeId('id')
                   .nodeLabel('name')
@@ -64,19 +70,24 @@ const hasNotes = notes.length > 0;
                     return c || '#71717a';
                   })
                   .backgroundColor(() => 'transparent')
+                  .warmupTicks(300)
+                  .cooldownTicks(0)
+                  .d3AlphaMin(0.001)
                   .onNodeClick(node => {
                     window.location.href = `/notes/${node.id}`;
                   });
 
-                graph.onEngineStop(() => graph.zoomToFit(400, 20));
+                graph.onEngineStop(() => {
+                  graph.zoomToFit(400, 40);
+                  if (loadingEl) loadingEl.style.display = 'none';
+                });
 
                 let resizeTimeout;
                 window.addEventListener('resize', () => {
                   clearTimeout(resizeTimeout);
                   resizeTimeout = setTimeout(() => {
-                    if (window.innerWidth < 768) {
-                      graph.zoomToFit(400, 20);
-                    }
+                    graph.width(container.clientWidth).height(container.clientHeight);
+                    graph.zoomToFit(400, 40);
                   }, 300);
                 });
               } catch (err) {
