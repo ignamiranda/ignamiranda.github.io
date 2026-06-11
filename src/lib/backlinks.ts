@@ -64,6 +64,8 @@ function readAllNotes(): ReadNoteResult[] {
         }
       }
 
+      if (data.draft === true) continue;
+
       const tags = (data.tags as string[]) || [];
 
       results.push({ slug, title, body, data, links, tags });

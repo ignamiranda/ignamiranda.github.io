@@ -4,7 +4,7 @@ import ForceGraph from "../components/ForceGraph.astro";
 import { getCollection } from "astro:content";
 import { getAllTags } from "../lib/backlinks";
 import { previewText as _previewText } from "../lib/markdown";
-const notes = await getCollection("notes");
+const notes = (await getCollection("notes")).filter((n) => !n.data.draft);
 const allTags = getAllTags();
 
 function previewText(body: string): string {
