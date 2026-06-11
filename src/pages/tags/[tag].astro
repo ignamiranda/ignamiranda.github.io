@@ -5,7 +5,7 @@ import { previewText as _previewText } from "../../lib/markdown";
 import { tagSlug } from "../../lib/slugify";
 
 export async function getStaticPaths() {
-  const notes = await getCollection("notes");
+  const notes = (await getCollection("notes")).filter((n) => !n.data.draft);
   const tags = new Set<string>();
   for (const note of notes) {
     for (const tag of (note.data.tags || [])) {
@@ -20,6 +20,7 @@ export async function getStaticPaths() {
 
 const { tag } = Astro.props;
 const notes = (await getCollection("notes"))
+  .filter((n) => !n.data.draft)
   .filter(n => (n.data.tags || []).includes(tag))
   .sort((a, b) => (b.data.date || "").localeCompare(a.data.date || ""));
 

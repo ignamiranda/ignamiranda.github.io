@@ -6,10 +6,12 @@ import { getBacklinks, getNoteDate } from "../../lib/backlinks";
 
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
-  return notes.map((note) => ({
-    params: { slug: note.slug },
-    props: { note },
-  }));
+  return notes
+    .filter((note) => !note.data.draft)
+    .map((note) => ({
+      params: { slug: note.slug },
+      props: { note },
+    }));
 }
 
 const { note } = Astro.props;
