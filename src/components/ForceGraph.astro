@@ -68,7 +68,8 @@ const hasNotes = notes.length > 0;
                     window.location.href = `/notes/${node.id}`;
                   });
 
-                graph.onEngineStop(() => graph.zoomToFit(400, 20));
+                graph.d3AlphaMin(0.001).warmupTicks(30).onEngineStop(() => graph.zoomToFit(400, 20));
+                setTimeout(() => graph.zoomToFit(400, 20), 300);
 
                 let resizeTimeout;
                 window.addEventListener('resize', () => {
