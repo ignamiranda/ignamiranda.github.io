@@ -17,5 +17,5 @@ export function slugify(text: string): string {
  * Slugify a tag name for use in URL paths.
  */
 export function tagSlug(tag: string): string {
-  return tag.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+  return slugify(tag);
 }

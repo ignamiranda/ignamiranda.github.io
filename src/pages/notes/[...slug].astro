@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import ToolLayout from "../../layouts/ToolLayout.astro";
 import { getCollection, render } from "astro:content";
 import { getBacklinks, getNoteDate } from "../../lib/backlinks";
+import { tagSlug } from "../../lib/slugify";
 
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
@@ -42,7 +43,7 @@ const isTool = note.data.layout === "tool";
                 {tags && tags.length > 0 && (
                   <>
                     {tags.map((tag) => (
-                      <a href={`/tags/${encodeURIComponent(tag)}`} class="note-tag">{tag}</a>
+                      <a href={`/tags/${tagSlug(tag)}`} class="note-tag">{tag}</a>
                     ))}
                   </>
                 )}
