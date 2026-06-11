@@ -68,9 +68,7 @@ const hasNotes = notes.length > 0;
                     window.location.href = `/notes/${node.id}`;
                   });
 
-                if (window.innerWidth < 768) {
-                  setTimeout(() => graph.zoomToFit(400, 20), 500);
-                }
+                graph.onEngineStop(() => graph.zoomToFit(400, 20));
 
                 let resizeTimeout;
                 window.addEventListener('resize', () => {
