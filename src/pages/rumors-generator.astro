@@ -1,0 +1,15 @@
+---
+import { getEntry, render } from "astro:content";
+import ToolLayout from "../layouts/ToolLayout.astro";
+
+const entry = await getEntry("notes", "rumors-generator");
+if (!entry) {
+  throw new Error("Content collection entry 'notes/rumors-generator' not found");
+}
+const { Content } = await render(entry);
+const slug = entry.slug || "rumors-generator";
+---
+
+<ToolLayout slug={slug}>
+  <Content />
+</ToolLayout>

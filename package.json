@@ -14,11 +14,13 @@
     "force-graph": "^1.51.4",
     "js-yaml": "^4.2.0",
     "minisearch": "^7.2.0",
+    "tracery-grammar": "^2.8.4",
     "unist-util-visit": "^5.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@types/tracery-grammar": "^2.7.4",
     "typescript": "^5.9.3",
     "vitest": "^4.1.8"
   }
