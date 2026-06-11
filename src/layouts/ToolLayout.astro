@@ -2,6 +2,7 @@
 import Layout from "./Layout.astro";
 import NameGenerator from "../components/NameGenerator.astro";
 import RumorsGenerator from "../components/RumorsGenerator.astro";
+import BattleMapGenerator from "../components/BattleMapGenerator.astro";
 
 export interface Props {
   slug: string;
@@ -12,6 +13,7 @@ const { slug } = Astro.props;
 const TOOL_INFO: Record<string, { title: string }> = {
   "name-generator": { title: "Name Generator" },
   "rumors-generator": { title: "Rumors Generator" },
+  "battle-map-generator": { title: "Battle Map Generator" },
 };
 const toolInfo = TOOL_INFO[slug];
 const pageTitle = toolInfo?.title || "Tool";
@@ -30,6 +32,7 @@ const pageTitle = toolInfo?.title || "Tool";
     <section class="tool-body">
       {slug === "name-generator" && <NameGenerator />}
       {slug === "rumors-generator" && <RumorsGenerator />}
+      {slug === "battle-map-generator" && <BattleMapGenerator />}
     </section>
   </main>
 </Layout>

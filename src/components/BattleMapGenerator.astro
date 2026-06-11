@@ -1,0 +1,299 @@
+<div class="battle-map" id="battle-map">
+  <div class="map-grid" id="map-grid"></div>
+  <div class="map-toolbar">
+    <button class="toolbar-btn" data-action="regenerate" title="Generate new map">🔄</button>
+    <button class="toolbar-btn" data-action="copy" title="Copy as text">📋</button>
+    <button class="toolbar-btn" data-action="download" title="Download PNG">💾</button>
+    <button class="toolbar-btn" data-action="fullscreen" title="Fullscreen">🖥️</button>
+  </div>
+  <p class="map-attribution">Map tiles by <a href="https://github.com/twitter/twemoji" target="_blank" rel="noopener">Twitter/Twemoji</a> (CC-BY 4.0)</p>
+</div>
+
+<div class="fullscreen-overlay" id="fullscreen-overlay" hidden>
+  <div class="fullscreen-header">
+    <button class="fullscreen-close" id="fullscreen-close">✕</button>
+  </div>
+  <div class="fullscreen-body">
+    <div class="fullscreen-map" id="fullscreen-map"></div>
+  </div>
+</div>
+
+<canvas id="export-canvas" hidden></canvas>
+
+<script>
+  import { generateMap, gridToEmoji } from "../lib/wfc.js";
+
+  const ROWS = 20;
+  const COLS = 20;
+  const CELL = 32;
+  const PADDING = 16;
+
+  const gridEl = document.getElementById("map-grid");
+  const fullscreenMap = document.getElementById("fullscreen-map");
+  const fullscreenOverlay = document.getElementById("fullscreen-overlay");
+  const fullscreenClose = document.getElementById("fullscreen-close");
+  const exportCanvas = document.getElementById("export-canvas");
+
+  let currentGrid = null;
+
+  function renderGrid(grid) {
+    currentGrid = grid;
+    const cells = grid
+      .map(
+        (row, r) =>
+          row
+            .map(
+              (cell, c) =>
+                `<img src="/tiles/${cell.tile.id}.svg" alt="${cell.tile.name}" width="${CELL}" height="${CELL}" data-row="${r}" data-col="${c}" loading="lazy"/>`,
+            )
+            .join(""),
+      )
+      .join("");
+    gridEl.innerHTML = cells;
+  }
+
+  function regenerate() {
+    const grid = generateMap(ROWS, COLS);
+    renderGrid(grid);
+  }
+
+  function copyAsText() {
+    if (!currentGrid) return;
+    const text = gridToEmoji(currentGrid);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  async function downloadPNG() {
+    if (!currentGrid) return;
+    const w = COLS * CELL + PADDING * 2;
+    const h = ROWS * CELL + PADDING * 2;
+    exportCanvas.width = w;
+    exportCanvas.height = h;
+    const ctx = exportCanvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, w, h);
+
+    const promises = [];
+    const images = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const src = `/tiles/${currentGrid[r][c].tile.id}.svg`;
+        const p = loadImage(src).then((img) => {
+          images.push({ img, r, c });
+        });
+        promises.push(p);
+      }
+    }
+
+    try {
+      await Promise.all(promises);
+    } catch {
+      return;
+    }
+
+    for (const { img, r, c } of images) {
+      ctx.drawImage(img, PADDING + c * CELL, PADDING + r * CELL, CELL, CELL);
+    }
+
+    const link = document.createElement("a");
+    link.download = "battle-map.png";
+    link.href = exportCanvas.toDataURL("image/png");
+    link.click();
+  }
+
+  function toggleFullscreen() {
+    if (!currentGrid) return;
+    const isOpen = !fullscreenOverlay.hidden;
+    if (isOpen) {
+      fullscreenOverlay.hidden = true;
+      document.body.style.overflow = "";
+    } else {
+      fullscreenOverlay.hidden = false;
+      document.body.style.overflow = "hidden";
+      const scale = 2;
+      const cells = currentGrid
+        .map(
+          (row) =>
+            row
+              .map(
+                (cell) =>
+                  `<img src="/tiles/${cell.tile.id}.svg" alt="${cell.tile.name}" width="${CELL * scale}" height="${CELL * scale}" />`,
+              )
+              .join(""),
+        )
+        .join("");
+      fullscreenMap.innerHTML = cells;
+    }
+  }
+
+  gridEl.addEventListener("click", (e) => {
+    const img = e.target.closest("img");
+    if (!img) return;
+    img.classList.toggle("map-cell-highlight");
+  });
+
+  document.querySelector(".map-toolbar").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    switch (btn.dataset.action) {
+      case "regenerate":
+        regenerate();
+        break;
+      case "copy":
+        copyAsText();
+        btn.textContent = "✓";
+        setTimeout(() => (btn.textContent = "📋"), 1000);
+        break;
+      case "download":
+        downloadPNG();
+        break;
+      case "fullscreen":
+        toggleFullscreen();
+        break;
+    }
+  });
+
+  fullscreenClose.addEventListener("click", toggleFullscreen);
+  fullscreenOverlay.addEventListener("click", (e) => {
+    if (e.target === fullscreenOverlay) toggleFullscreen();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !fullscreenOverlay.hidden) toggleFullscreen();
+  });
+
+  regenerate();
+</script>
+
+<style>
+  .battle-map {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .map-grid {
+    display: grid;
+    grid-template-columns: repeat(20, 32px);
+    grid-template-rows: repeat(20, 32px);
+    border: 2px solid color-mix(in srgb, var(--fg) 15%, transparent);
+    border-radius: 4px;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .map-grid img {
+    display: block;
+    transition: opacity 0.15s;
+  }
+
+  .map-cell-highlight {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    z-index: 1;
+    position: relative;
+  }
+
+  .map-toolbar {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .toolbar-btn {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.4rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    transition: all 0.15s;
+    line-height: 1;
+    background: color-mix(in srgb, var(--fg) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+  }
+  .toolbar-btn:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .map-attribution {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .map-attribution a {
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .map-attribution a:hover {
+    color: var(--accent);
+  }
+
+  .fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: color-mix(in srgb, #000 85%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .fullscreen-overlay[hidden] {
+    display: none;
+  }
+
+  .fullscreen-header {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1rem;
+  }
+
+  .fullscreen-close {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.8rem;
+    color: #fff;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .fullscreen-close:hover {
+    background: color-mix(in srgb, #fff 15%, transparent);
+  }
+
+  .fullscreen-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .fullscreen-map {
+    display: grid;
+    grid-template-columns: repeat(20, 64px);
+    grid-template-rows: repeat(20, 64px);
+    border: 2px solid color-mix(in srgb, #fff 20%, transparent);
+    border-radius: 4px;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .fullscreen-map img {
+    display: block;
+  }
+</style>
