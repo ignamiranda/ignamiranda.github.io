@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getAllTags } from "../../lib/backlinks";
+import { tagSlug } from "../../lib/slugify";
 const tags = getAllTags();
 ---
 
@@ -11,7 +12,7 @@ const tags = getAllTags();
       {tags.length > 0 ? (
         <div class="tag-list">
           {tags.map((t) => (
-            <a href={`/tags/${t.tag.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')}`} class="tag-item">
+            <a href={`/tags/${tagSlug(t.tag)}`} class="tag-item">
               <span class="tag-name">{t.tag}</span>
               <sup class="tag-count">{t.count}</sup>
             </a>

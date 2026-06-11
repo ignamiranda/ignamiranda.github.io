@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import ForceGraph from "../components/ForceGraph.astro";
 import { getCollection } from "astro:content";
 import { getAllTags } from "../lib/backlinks";
+import { tagSlug } from "../lib/slugify";
 import { previewText as _previewText } from "../lib/markdown";
 const notes = (await getCollection("notes")).filter((n) => !n.data.draft);
 const allTags = getAllTags();
@@ -77,7 +78,7 @@ function previewText(body: string): string {
       <h2 class="section-heading">Tags</h2>
       <div class="tag-cloud">
         {allTags.map(t => (
-          <a href={`/tags/${t.tag}`} class="tag-item">{t.tag}<sup aria-hidden="true">{t.count}</sup><span class="sr-only">{t.count} notes</span></a>
+          <a href={`/tags/${tagSlug(t.tag)}`} class="tag-item">{t.tag}<sup aria-hidden="true">{t.count}</sup><span class="sr-only">{t.count} notes</span></a>
         ))}
       </div>
     </section>
