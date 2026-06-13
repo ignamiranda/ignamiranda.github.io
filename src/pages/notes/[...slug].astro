@@ -29,7 +29,7 @@ const isTool = note.data.layout === "tool";
       <Content />
     </ToolLayout>
   ) : (
-    <Layout title={note.data.title}>
+    <Layout title={note.data.title} description={note.data.description}>
     <main>
       <article class="note-page">
         <header class="note-header">
