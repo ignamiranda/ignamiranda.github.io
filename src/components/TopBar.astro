@@ -22,9 +22,7 @@ const notes = getAllNotes();
   </div>
 </header>
 
-<script type="application/json" id="topbar-notes-data">
-  {JSON.stringify(notes)}
-</script>
+<script type="application/json" id="topbar-notes-data" set:html={JSON.stringify(notes).replace(/</g,"\\u003c")}></script>
 
 <script>
 (() => {

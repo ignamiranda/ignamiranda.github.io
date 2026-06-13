@@ -30,7 +30,7 @@ const hasNotes = notes.length > 0;
         </div>
         <div id="force-graph-container" role="img" aria-label={"Note link graph with " + nodes.length + " notes"}></div>
       </div>
-      <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData)}></script>
+      <script type="application/json" id="graph-data" set:html={JSON.stringify(graphData).replace(/</g,"\\u003c")}></script>
       <script>
         (async function initGraph() {
           const container = document.getElementById('force-graph-container');
