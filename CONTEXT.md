@@ -28,7 +28,7 @@ _Avoid_: Portfolio gallery, polished showcase
 Software, writing, design/visual art, and games/interactive — multi-disciplinary, not siloed.
 
 **Name Generator**:
-Client-side Markov-chain tool for creating custom name generators from one user-provided example list, with advanced controls. First content piece — acts as a reference implementation that demonstrates how the site can host interactive tools. Lives on its own page (`/name-generator`), linked from the Generators section on the home page.
+Client-side Markov-chain tool for creating custom name generators from one user-provided example list, with advanced controls. First content piece — acts as a reference implementation that demonstrates how the site can host interactive tools. Lives at `/notes/name-generator`, linked from the Generators section on the home page.
 _Avoid_: Fixed race lists, server-side generation, syllable tables
 
 **Shared World Villains**:
