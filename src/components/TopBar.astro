@@ -8,7 +8,7 @@ const notes = getAllNotes();
   <div class="top-bar-inner">
     <a href="/" class="top-bar-logo">ignamiranda</a>
     <nav class="top-bar-nav">
-      <a href="#" class="top-bar-link" id="random-link">Random</a>
+      <button class="top-bar-link" id="random-link">Random</button>
       <div class="search-wrapper">
         <input
           type="search"
@@ -31,8 +31,7 @@ const notes = getAllNotes();
   const dataEl = document.getElementById("topbar-notes-data");
   if (link && dataEl) {
     const notes = JSON.parse(dataEl.textContent || "[]");
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
+    link.addEventListener("click", () => {
       if (!notes.length) return;
       const pick = notes[Math.floor(Math.random() * notes.length)];
       window.location.href = "/notes/" + encodeURIComponent(pick.slug);

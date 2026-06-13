@@ -374,6 +374,10 @@ a.wikilink.dead-link::after {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 .top-bar-link:hover {
   color: var(--fg);
