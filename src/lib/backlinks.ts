@@ -1,9 +1,8 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
 import { slugify } from "./slugify";
-import { stripMarkdown, previewText as extractPreview } from "./markdown";
+import { previewText as extractPreview } from "./markdown";
 
 const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
@@ -14,7 +13,28 @@ function parseFrontmatter(
   if (!match) {
     return { data: {}, body: content };
   }
-  const data = (yaml.load(match[1]) as Record<string, unknown>) || {};
+  const raw = match[1];
+  const data: Record<string, unknown> = {};
+  const lines = raw.split("\n");
+  let currentKey: string | null = null;
+  for (const line of lines) {
+    const kv = line.match(/^(\w+):\s*(.*)$/);
+    if (kv) {
+      currentKey = kv[1];
+      let val: unknown = kv[2].trim();
+      if (val === "true") val = true;
+      else if (val === "false") val = false;
+      else if (val === "") {
+        val = [];
+        data[currentKey] = val;
+        continue;
+      }
+      if (val !== "") data[currentKey] = val;
+    } else if (currentKey && Array.isArray(data[currentKey])) {
+      const item = line.match(/^\s*-\s*(.*)$/);
+      if (item) (data[currentKey] as string[]).push(item[1]);
+    }
+  }
   return { data, body: match[2] };
 }
 
@@ -37,10 +57,12 @@ interface ReadNoteResult {
   tags: string[];
 }
 
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
+
 let readAllCache: ReadNoteResult[] | null = null;
 
 function readAllNotes(): ReadNoteResult[] {
-  if (readAllCache) return readAllCache;
+  if (!isDev && readAllCache) return readAllCache;
 
   const notesDir = path.join(process.cwd(), "src", "content", "notes");
   const results: ReadNoteResult[] = [];
@@ -81,7 +103,7 @@ function readAllNotes(): ReadNoteResult[] {
 let cachedBacklinks: Map<string, Backlink[]> | null = null;
 
 function buildBacklinkMap(): Map<string, Backlink[]> {
-  if (cachedBacklinks) return cachedBacklinks;
+  if (!isDev && cachedBacklinks) return cachedBacklinks;
 
   const notes = readAllNotes();
 
@@ -99,7 +121,7 @@ function buildBacklinkMap(): Map<string, Backlink[]> {
     }
   }
 
-  cachedBacklinks = backlinks;
+  if (!isDev) cachedBacklinks = backlinks;
   return backlinks;
 }
 
@@ -117,9 +139,10 @@ let noteCache: NoteEntry[] | null = null;
 
 /** Return a list of all notes (slug + title). */
 export function getAllNotes(): NoteEntry[] {
-  if (noteCache) return noteCache;
-  noteCache = readAllNotes().map((n) => ({ slug: n.slug, title: n.title }));
-  return noteCache;
+  if (!isDev && noteCache) return noteCache;
+  const result = readAllNotes().map((n) => ({ slug: n.slug, title: n.title }));
+  if (!isDev) noteCache = result;
+  return result;
 }
 
 /** Return a map of all backlinks (slug → Backlink[]). */
@@ -138,15 +161,16 @@ let searchCache: SearchEntry[] | null = null;
 
 /** Build search index data: slug, title, preview, tags for every note. */
 export function generateSearchIndex(): SearchEntry[] {
-  if (searchCache) return searchCache;
+  if (!isDev && searchCache) return searchCache;
 
-  searchCache = readAllNotes().map((n) => ({
+  const result = readAllNotes().map((n) => ({
     slug: n.slug,
     title: n.title,
     preview: (n.data.description as string | undefined) || extractPreview(n.body),
     tags: n.tags,
   }));
-  return searchCache;
+  if (!isDev) searchCache = result;
+  return result;
 }
 
 export interface TagEntry {
@@ -171,7 +195,7 @@ export function getAllTags(): TagEntry[] {
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count);
 
-  tagCache = sorted;
+  if (!isDev) tagCache = sorted;
   return sorted;
 }
 
@@ -206,8 +230,8 @@ export function getNoteDate(slug: string, frontmatterDate?: string): string | nu
 
   try {
     const filePath = path.join(notesDir, fileName);
-    const result = execSync(
-      `git log -1 --format=%ad --date=short -- "${filePath}"`,
+    const result = execFileSync(
+      "git", ["log", "-1", "--format=%ad", "--date=short", "--", filePath],
       { encoding: "utf-8", cwd: process.cwd() },
     ).trim();
 
